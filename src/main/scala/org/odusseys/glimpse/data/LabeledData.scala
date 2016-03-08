@@ -5,5 +5,4 @@ package org.odusseys.glimpse.data
  */
 trait LabeledData extends Data {
   def getLabel: Double
-
 }
