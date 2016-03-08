@@ -7,7 +7,7 @@ import org.odusseys.glimpse.data.ColumnMapping._
  * Created by umizrahi on 08/03/2016.
  */
 trait Formula {
-  def decode[T <: Data](data: DataFrame[T]): FormulaReader[T]
+  def decodeFor[T <: Data](data: DataFrame[T]): FormulaReader[T]
 }
 
 trait FormulaReader[T <: Data] {
@@ -19,13 +19,20 @@ trait FormulaReader[T <: Data] {
 
   def variableIndices: Array[Int]
 
+  private val responseIndexMap = responseIndices.indices.map(i => (responseIndices(i), i)).toMap
+  private val variableIndexMap = variableIndices.indices.map(i => (variableIndices(i), i)).toMap
+
+  def sparseResponses: T => Iterator[(Int, Double)] = (d: T) => d.indices.withFilter(responseIndexMap.contains).map(i => (responseIndexMap(i), d(i)))
+
+  def sparseVariables: T => Iterator[(Int, Double)] = (d: T) => d.indices.withFilter(variableIndexMap.contains).map(i => (variableIndexMap(i), d(i)))
+
 }
 
 class ColumnNamesFormula(val wildcardResponses: Boolean,
                          val wildCardVariables: Boolean,
                          val responses: Array[String],
                          val variables: Array[String]) extends Formula {
-  override def decode[T](data: DataFrame[T]): FormulaReader[T] = new ColumnNamesFormulaReader(this, data)
+  override def decodeFor[T](data: DataFrame[T]): FormulaReader[T] = new ColumnNamesFormulaReader(this, data)
 }
 
 class ColumnNamesFormulaReader[T <: Data](formula: ColumnNamesFormula, data: DataFrame[T]) extends FormulaReader[T] {
