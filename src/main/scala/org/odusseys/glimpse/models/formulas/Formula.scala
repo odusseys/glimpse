@@ -1,18 +1,23 @@
 package org.odusseys.glimpse.models.formulas
 
-import org.odusseys.glimpse.data.DataFrame
+import org.odusseys.glimpse.data.{Data, DataFrame}
+import org.odusseys.glimpse.data.ColumnMapping._
 
 /**
  * Created by umizrahi on 08/03/2016.
  */
 trait Formula {
-  def decode[T](data: DataFrame[T]): FormulaReader[T]
+  def decode[T <: Data](data: DataFrame[T]): FormulaReader[T]
 }
 
-trait FormulaReader[T] {
-  def responses: Array[T => Int]
+trait FormulaReader[T <: Data] {
+  def responses: Array[T => Double] = responseIndices.map(i => (t: T) => t(i))
 
-  def variables: Array[T => Int]
+  def variables: Array[T => Double] = variableIndices.map(i => (t: T) => t(i))
+
+  def responseIndices: Array[Int]
+
+  def variableIndices: Array[Int]
 
 }
 
@@ -23,10 +28,24 @@ class ColumnNamesFormula(val wildcardResponses: Boolean,
   override def decode[T](data: DataFrame[T]): FormulaReader[T] = new ColumnNamesFormulaReader(this, data)
 }
 
-class ColumnNamesFormulaReader[T](formula: ColumnNamesFormula, data: DataFrame[T]) extends FormulaReader[T] {
-  override def responses: Array[(T) => Int] = ???
+class ColumnNamesFormulaReader[T <: Data](formula: ColumnNamesFormula, data: DataFrame[T]) extends FormulaReader[T] {
 
-  override def variables: Array[(T) => Int] = ???
+  val (_responseIndices, _variableIndices) = {
+    val mapper = data.getMapping.map { case (i, v) => (v.name, i) }
+    val unknown = (formula.responses ++ formula.variables).filter(!mapper.contains(_))
+    require(unknown.isEmpty, s"Unknown column names : ${unknown.mkString(", ")}")
+    if (formula.wildcardResponses) {
+      val v = formula.variables.map(mapper.apply)
+      ((mapper.values.toSet -- v).toArray, v)
+    } else {
+      val r = formula.responses.map(mapper.apply)
+      (r, (mapper.values.toSet -- r).toArray)
+    }
+  }
+
+  override def responseIndices: Array[Int] = _responseIndices
+
+  override def variableIndices: Array[Int] = _variableIndices
 }
 
 object Formula {
@@ -47,6 +66,7 @@ object Formula {
     val split = s.split(formulaSeparator).map(_.trim)
     val (wildcardResponses, responses) = decompose(split(0))
     val (wildcardVariables, variables) = decompose(split(1))
+    require(!(wildcardResponses && wildcardVariables), "Cannot have both wildcard responses and variables")
     new ColumnNamesFormula(wildcardResponses, wildcardVariables, responses, variables)
   }
 }

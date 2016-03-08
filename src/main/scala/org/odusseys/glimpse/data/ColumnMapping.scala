@@ -11,6 +11,4 @@ class ColumnMapping(private val mapping: Map[Int, Variable]) {
 
 object ColumnMapping {
   implicit def toIntMap(c: ColumnMapping): Map[Int, Variable] = c.mapping
-
-  implicit def toVariableMap(c: ColumnMapping): Map[Variable, Int] = c.reverse
 }
