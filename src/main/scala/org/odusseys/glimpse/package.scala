@@ -12,7 +12,16 @@ package object glimpse {
     def times(action: => Unit): Unit = {
       1 to i foreach (_ => action)
     }
+
+    def **(exp: Double): Double = math.pow(i, exp)
+
+    def **(exp: Int): Int = (math.pow(i, exp) + 0.5) toInt
   }
+
+  implicit class DoubleAdditions(d: Double) {
+    def **(exp: Double): Double = math.pow(d, exp)
+  }
+
 
   /* Operations to write sums and products in mathematical-ish notation*/
 
@@ -58,7 +67,12 @@ package object glimpse {
     def tan[That](implicit cbf: CanBuildFrom[Repr[T], Double, That], num: Numeric[T]): That = applyNumericFunction(math.tan)
 
     def tanh[That](implicit cbf: CanBuildFrom[Repr[T], Double, That], num: Numeric[T]): That = applyNumericFunction(math.tanh)
-  }
 
+    def *[S, Repr2[S], That](other: TraversableLike[S, Repr2[S]])(implicit cbf: CanBuildFrom[Repr[T], (T, S), That],
+                                                                  cbf2: CanBuildFrom[Repr2[S], (T, S), TraversableLike[(T, S), Repr2[(T, S)]]]): That = {
+      coll.flatMap(c => other.map(o => (c, o)))
+    }
+
+  }
 
 }

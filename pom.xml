@@ -98,18 +98,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Specific Library -->
         <dependency>
             <groupId>org.scalanlp</groupId>
             <artifactId>breeze_2.10</artifactId>
-            <version>0.11.2</version>
-        </dependency>
-
-        <!-- S3 -->
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk</artifactId>
-            <version>1.10.12</version>
+            <!-- or 2.11 -->
+            <version>0.12</version>
         </dependency>
 
     </dependencies>

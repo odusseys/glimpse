@@ -9,6 +9,6 @@ case class NumericVariable(name: String) extends Variable(name)
 
 case class FactorVariable[T](name: String) extends Variable(name)
 
-case class FactorDummy[T](factorName: String, level: T) extends FactorVariable(factorName + "$" + level) {
-  def getFactor = FactorVariable[T](factorName)
+case class FactorDummy[T](factorName: String, level: T) extends Variable(factorName + "$" + level) {
+  def getFactor = new FactorVariable[T](factorName)
 }
