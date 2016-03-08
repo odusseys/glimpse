@@ -7,4 +7,9 @@ trait Data {
   def indices: Iterator[Int]
 
   def apply(i: Int): Double
+
+  def size: Int
+
+  def toArray: Array[Double] = (0 until size) map apply toArray
+
 }

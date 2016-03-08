@@ -1,19 +1,26 @@
-package org.odusseys.glimpse.models
+package org.odusseys.glimpse.models.algorithms
 
-import breeze.optimize.MaxIterations
 import org.odusseys.glimpse.data.Data
-import org.odusseys.glimpse.models.LinearRegression._
+import org.odusseys.glimpse.models.algorithms.LinearRegression._
 
 /**
  * Created by umizrahi on 08/03/2016.
  */
 class LinearRegression(method: Method = Newton,
-                       maxIterations: Int = 100) {
-  def train = {
+                       maxIterations: Int = 100,
+                       initialIntercept: Double = 0.0,
+                       intialCoefficient: Seq[Double] = null) {
 
+  def train: LinearRegressionModel = {
+    method match {
+      case Adagrad => trainAdagrad
+      case _ => throw new NotImplementedError()
+    }
   }
 
-  private def trainWith
+  private def trainAdagrad: LinearRegressionModel = {
+    null
+  }
 
 }
 

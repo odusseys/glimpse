@@ -9,4 +9,8 @@ class DenseData(vec: DenseVector[Double]) extends Data {
   override def indices: Iterator[Int] = vec.activeKeysIterator
 
   override def apply(i: Int): Double = vec(i)
+
+  def size: Int = vec.length
+
+  override def toArray: Array[Double] = vec.toArray
 }
