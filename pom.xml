@@ -74,7 +74,7 @@
         </dependency>
 
         <!-- Spark -->
-        <dependency>
+        <!--dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.10</artifactId>
             <version>${spark.version}</version>
@@ -83,7 +83,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.10</artifactId>
             <version>${spark.version}</version>
-        </dependency>
+        </dependency-->
         <!-- Test -->
         <dependency>
             <groupId>junit</groupId>

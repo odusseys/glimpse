@@ -52,7 +52,7 @@ class ColumnIndexFormula(val wildcardResponses: Boolean,
 class ColumnNamesFormulaReader[T <: Data](formula: ColumnNamesFormula, data: DataFrame[T]) extends FormulaReader[T] {
 
   val (_responseIndices, _variableIndices) = {
-    val mapper = data.getMapping.map { case (i, v) => (v.name, i) }
+    val mapper = data.mapping.map { case (i, v) => (v.name, i) }
     val unknown = (formula.responses ++ formula.variables).filter(!mapper.contains(_))
     require(unknown.isEmpty, s"Unknown column names : ${unknown.mkString(", ")}")
     if (formula.wildcardResponses) {
@@ -75,7 +75,7 @@ class ColumnIndexFormulaReader[T <: Data](formula: ColumnIndexFormula, data: Dat
 
 
   val (_responsesIndices, _variableIndices) = {
-    val allIndices = data.getMapping.toMap.keySet
+    val allIndices = data.mapping.toMap.keySet
     val outOfBounds = formula.responses ++ formula.variables filter (_ < allIndices.size)
     require(outOfBounds.isEmpty, s"Indices out of bounds : ${outOfBounds.mkString(", ")}")
     if (formula.wildcardResponses) {
