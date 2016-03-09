@@ -22,7 +22,7 @@ class KMeans(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
     val n = variables.length
     val centroids = initializeClassic(k, n)
 
-    for (i <- 1 to iterations) iteration()
+
 
     def assign(d: T) = {
       centroids.indices.minBy(i => squareDistance(d, centroids(i)))
@@ -56,6 +56,8 @@ class KMeans(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
       }
       updateCentroids()
     }
+
+    for (i <- 1 to iterations) iteration()
 
     new KMeansModel(centroids.map(_.toVector))
   }

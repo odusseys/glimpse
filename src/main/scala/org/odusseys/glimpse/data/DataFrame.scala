@@ -31,7 +31,7 @@ object DataFrame {
 
   def apply(data: Iterable[Map[Any, Double]])(implicit d: DummyImplicit): DataFrame[SparseData] = {
     val variableMapping = data.view.flatMap(_.keys.map(_.toString))
-      .toSet.map(s => (s, new NumericVariable(s))).toMap
+      .toSet.map((s: String) => (s, new NumericVariable(s))).toMap
     val mapping = new ColumnMapping(variableMapping.values.toList)
     val n = mapping.columns.size
     val dat = data.view
