@@ -1,6 +1,6 @@
 package org.odusseys.glimpse.models.algorithms.supervised
 
-import breeze.linalg.{DenseVector, inv, DenseMatrix}
+import breeze.linalg._
 import org.odusseys.glimpse.data.{DataFrame, Data}
 import LinearRegression._
 import org.odusseys.glimpse.models.formulas.Formula
@@ -19,8 +19,11 @@ class LinearRegression(formula: Formula,
   def train[DataType <: Data](data: DataFrame[DataType]): LinearRegressionModel = {
     val reader = formula.decodeFor(data)
     require(reader.signature._1 == 1, "Formula should have a single response !")
+    val variables = reader.variables
+    val response = reader.responses(0)
     method match {
-      case SGD => trainAdagrad(data, reader.variables, reader.responses(0))
+      case SGD => trainAdagrad(data, variables, response)
+      case Newton => trainNewton(data, variables, response)
       case _ => throw new NotImplementedError()
     }
   }
@@ -41,14 +44,17 @@ class LinearRegression(formula: Formula,
       }
       i = i + 1
     }
-    val y = DenseVector(data.map(response))
+    val t = design.t
+    val y = new DenseMatrix[Double](data.size, 1, data.map(response).toArray)
     val inverse = inv(design.t * design)
-    null
+    val result = (inverse * design).asInstanceOf[DenseMatrix[Double]] * y
+    val c = result.asInstanceOf[DenseMatrix[Double]].toArray
+    new LinearRegressionModel(c(0), c.drop(1))
   }
 
 }
 
-class LinearRegressionModel(val intercept: Double, val coefficients: Vector[Double]) {
+class LinearRegressionModel(val intercept: Double, val coefficients: Array[Double]) {
   def predict(d: Data) = intercept + d.indices.map(i => d(i) * coefficients(i)).sum
 
   def predict(a: Array[Double]) = intercept + a.indices.map(i => a(i) * coefficients(i)).sum
@@ -84,7 +90,7 @@ object LinearRegression {
         }
       }
       }
-      new LinearRegressionModel(baseline, coefficients.value.toVector)
+      new LinearRegressionModel(baseline, coefficients)
     }
 
     def predict(l: DataType) = {

@@ -5,18 +5,17 @@ package org.odusseys.glimpse
  */
 object Test {
   def main(args: Array[String]) {
-    val u = List(1, 2, 3)
-    print(u.pow(0.5))
+    import breeze.linalg._
 
-    val a = List(1,2,3)
-    val b = Seq(1,2,3)
-
-    val c = a * b
+    val a = new DenseMatrix[Double](3, 3)
+    val b = new DenseMatrix[Double](3, 3, (1 to 9) map (_.toDouble) toArray)
+    println(a)
+    println(b)
+    val c = (b * b)
+    println(c.getClass)
     println(c)
 
-
   }
-
 
 
 }

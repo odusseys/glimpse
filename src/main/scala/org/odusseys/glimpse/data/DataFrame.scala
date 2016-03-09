@@ -20,14 +20,21 @@ object DataFrame {
 
   implicit def toSeq[T <: Data](data: DataFrame[T]): Seq[T] = data.data
 
-  def apply(data: Iterable[Seq[Double]]): DataFrame[DenseData] = {
-    val n = data.head.size
+  def apply(data: Iterable[Seq[Double]], columnNames: Seq[String]): DataFrame[DenseData] = {
+    val n = columnNames.size
     require(data.forall(_.size == n), "All sub-collections in the provided collection must have the same size !")
-    val variables = (1 to n) map { i => new NumericVariable(i.toString) } toArray
+    val variables = (0 until n) map { i => new NumericVariable(columnNames(i)) } toArray
     val mapping = new ColumnMapping(variables)
     val dat = data.view.map(l => new DenseData(l.toArray)).toSeq
     new DataFrame(dat, mapping)
   }
+
+  def apply(data: Iterable[Seq[Double]]): DataFrame[DenseData] = {
+    val n = data.head.size
+    val names = (0 until n).map(i => "V" + i).toSeq
+    apply(data, names)
+  }
+
 
   def apply(data: Iterable[Map[Any, Double]])(implicit d: DummyImplicit): DataFrame[SparseData] = {
     val variableMapping = data.view.flatMap(_.keys.map(_.toString))
