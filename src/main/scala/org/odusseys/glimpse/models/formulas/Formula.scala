@@ -21,8 +21,9 @@ trait FormulaReader[T <: Data] {
 
   def signature = (responseIndices.length, variableIndices.length)
 
-  private val responseIndexMap = responseIndices.indices.map(i => (responseIndices(i), i)).toMap
-  private val variableIndexMap = variableIndices.indices.map(i => (variableIndices(i), i)).toMap
+  //these are lazy so that they don't call response/variableIndices methods during init
+  private lazy val responseIndexMap = responseIndices.indices.map(i => (responseIndices(i), i)).toMap
+  private lazy val variableIndexMap = variableIndices.indices.map(i => (variableIndices(i), i)).toMap
 
   def sparseResponses: T => Iterator[(Int, Double)] =
     (d: T) => d.indices.withFilter(responseIndexMap.contains)
@@ -94,12 +95,12 @@ class ColumnIndexFormulaReader[T <: Data](formula: ColumnIndexFormula, data: Dat
 
 object Formula {
 
-  val columnSeparator = "+"
+  val columnSeparator = "\\+"
   val formulaSeparator = "~"
   val wildcard = "."
 
   private def decompose(member: String) = {
-    if (member.equals(wildcard)) {
+    if (member.trim().equals(wildcard)) {
       (true, Array[String]())
     } else {
       (false, member.split(columnSeparator).map(_.trim))
@@ -121,5 +122,7 @@ object Formula {
     require(!(wildcardResponses && wildcardVariables), "Cannot have both wildcard responses and variables")
     new ColumnIndexFormula(wildcardResponses, wildcardVariables, responses.map(_.toInt), variables.map(_.toInt))
   }
+
+  implicit def toFormula(s: String) : Formula = fromNames(s)
 
 }
