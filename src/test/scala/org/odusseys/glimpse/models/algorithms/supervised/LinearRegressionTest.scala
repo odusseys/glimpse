@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 /**
  * Created by umizrahi on 09/03/2016.
  */
-class LogisticRegressionTest extends FunSuite {
+class LinearRegressionTest extends FunSuite {
   test("test with Newton's method") {
 
   }
