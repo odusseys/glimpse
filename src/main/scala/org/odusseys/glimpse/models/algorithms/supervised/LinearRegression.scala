@@ -1,7 +1,7 @@
-package org.odusseys.glimpse.models.algorithms
+package org.odusseys.glimpse.models.algorithms.supervised
 
 import org.odusseys.glimpse.data.Data
-import org.odusseys.glimpse.models.algorithms.LinearRegression._
+import LinearRegression._
 
 /**
  * Created by umizrahi on 08/03/2016.
@@ -10,6 +10,7 @@ class LinearRegression(method: Method = Newton,
                        maxIterations: Int = 100,
                        initialIntercept: Double = 0.0,
                        intialCoefficient: Seq[Double] = null) {
+
 
   def train: LinearRegressionModel = {
     method match {
