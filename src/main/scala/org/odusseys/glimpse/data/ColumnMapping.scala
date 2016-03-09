@@ -3,7 +3,7 @@ package org.odusseys.glimpse.data
 /**
  * Created by umizrahi on 04/03/2016.
  */
-class ColumnMapping(val columns: Array[Variable]) {
+class ColumnMapping(val columns: Seq[Variable]) {
   private val reverse = columns.zipWithIndex.toMap
 
   private val mapping = reverse.map(_.swap)
