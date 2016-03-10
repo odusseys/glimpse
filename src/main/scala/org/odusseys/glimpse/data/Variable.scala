@@ -5,9 +5,13 @@ import scala.collection.mutable
 /**
  * Created by umizrahi on 04/03/2016.
  */
-sealed abstract class Variable(val name: String)
+sealed abstract class Variable(val name: String) {
+  def decode(value: Double): String
+}
 
-class NumericVariable(override val name: String) extends Variable(name)
+class NumericVariable(override val name: String) extends Variable(name) {
+  override def decode(value: Double) = value.toString
+}
 
 class FactorVariable(override val name: String) extends Variable(name) {
 
@@ -33,6 +37,7 @@ class FactorVariable(override val name: String) extends Variable(name) {
 
   def levels = inverseMapping.toSeq.sortBy(_._1).map(_._2)
 
+  override def decode(value: Double): String = inverseMapping(value.toInt)
 }
 
 class FactorDummy[T](factorName: String, level: String) extends NumericVariable(factorName + "$" + level) {

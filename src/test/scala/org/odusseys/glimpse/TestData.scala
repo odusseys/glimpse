@@ -15,7 +15,7 @@ object TestData {
                      seed: Random = new Random()) = {
     require(nCluster > 0)
     val centroids = Array.fill(nCluster, nVariables)(2 * seed.nextGaussian())
-    val sds = Array.fill(nCluster)(seed.nextDouble())
+    val sds = Array.fill(nCluster, nVariables)(seed.nextDouble())
     val probs = Array.fill(nCluster)(seed.nextDouble())
     val norm = probs.sum
     probs.indices.foreach { i => probs(i) = probs(i) / norm }
@@ -34,7 +34,8 @@ object TestData {
     def generate() = {
       val cluster = generateCluster()
       val x = Array.fill(nVariables)(seed.nextGaussian())
-        .map { u => u * sds(cluster) }
+        .zip(sds(cluster))
+        .map { case (u, v) => u * v }
         .zip(centroids(cluster))
         .map { case (u, v) => u + v }
       x.toSeq
@@ -60,8 +61,5 @@ object TestData {
     DataFrame((1 to nSamples) map { _ => generate() }, names)
   }
 
-  def main(args: Array[String]) {
-    linearData().print
-  }
 
 }
