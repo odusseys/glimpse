@@ -3,6 +3,8 @@ package org.odusseys.glimpse.models.algorithms.supervised
 import breeze.linalg._
 import org.odusseys.glimpse.data.{DataFrame, Data}
 import LinearRegression._
+import org.odusseys.glimpse.models.algorithms.Method
+import org.odusseys.glimpse.models.algorithms.supervised.GLM.Gaussian
 import org.odusseys.glimpse.models.formulas.Formula
 import org.odusseys.glimpse.models.optimization.AdagradOptimizer
 
@@ -13,7 +15,7 @@ class LinearRegression(formula: Formula,
                        method: Method = Newton,
                        maxIterations: Int = 100,
                        initialIntercept: Double = 0.0,
-                       intialCoefficient: Seq[Double] = null) {
+                       initialCoefficients: Seq[Double] = null) {
 
 
   def train[DataType <: Data](data: DataFrame[DataType]): LinearRegressionModel = {
@@ -22,15 +24,13 @@ class LinearRegression(formula: Formula,
     val variables = reader.variables
     val response = reader.responses(0)
     method match {
-      case SGD => trainAdagrad(data, variables, response)
       case Newton => trainNewton(data, variables, response)
-      case _ => throw new NotImplementedError()
+      case _ => {
+        val glm = new GLM(formula, Gaussian, maxIterations, initialIntercept, initialCoefficients)
+          .train(data, method)
+        new LinearRegressionModel(glm.intercept, glm.coefficients)
+      }
     }
-  }
-
-  private def trainAdagrad[DataType <: Data](data: DataFrame[DataType], variables: Array[DataType => Double], response: DataType => Double): LinearRegressionModel = {
-    val learner = new AdagradLinearRegression(initialIntercept, variables, response)
-    learner.train(data, maxIterations)
   }
 
   private def trainNewton[DataType <: Data](data: DataFrame[DataType], variables: Array[DataType => Double], response: DataType => Double): LinearRegressionModel = {
@@ -44,7 +44,6 @@ class LinearRegression(formula: Formula,
       }
       i = i + 1
     }
-    val t = design.t
     val y = new DenseMatrix[Double](data.size, 1, data.map(response).toArray)
     val inverse = inv(design.t * design)
     val result = (inverse * design).asInstanceOf[DenseMatrix[Double]] * y
@@ -66,12 +65,6 @@ class LinearRegressionModel(val intercept: Double, val coefficients: Array[Doubl
 }
 
 object LinearRegression {
-
-  sealed trait Method
-
-  case object SGD extends Method
-
-  case object LBFGS extends Method
 
   case object Newton extends Method
 

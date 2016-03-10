@@ -63,4 +63,18 @@ object Import {
 
   }
 
+  def fromLibSVM(path: String) = {
+
+    def decode(s: String): Map[Any, Double] = {
+      val ar = s.split(" ")
+      Map("Y".asInstanceOf[Any] -> ar(0).toDouble) ++ ar.drop(1).map { t =>
+        val components = t.split(":")
+        "V" + components(0) -> components(1).toDouble
+      }
+    }
+
+    val it = Source.fromFile(path).getLines().map(decode).toIterable
+    DataFrame(it.toIterable)
+  }
+
 }
