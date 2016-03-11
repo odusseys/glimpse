@@ -27,6 +27,7 @@ object Import {
       else
         new FactorVariable(names(i))
     }.toArray
+    val mapping = new ColumnMapping(variables)
 
     def processLine(s: String) = {
       val ar = s.split(sep).map(_.trim)
@@ -35,12 +36,12 @@ object Import {
           ar(i).toDouble
         else variables(i).asInstanceOf[FactorVariable].process(ar(i)).toDouble
       }.toArray
-      new DenseData(new DenseVector(dat))
+      new DenseData(new DenseVector(dat), mapping)
     }
 
     val buf = new ArrayBuffer[DenseData]
     Source.fromFile(path).getLines().drop(if (header) 1 else 0).foreach(s => buf.append(processLine(s)))
-    new DataFrame(buf.toSeq, new ColumnMapping(variables))
+    new DataFrame(buf.toSeq, mapping)
   }
 
 

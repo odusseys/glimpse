@@ -8,6 +8,8 @@ trait Data {
 
   def apply(i: Int): Double
 
+  def apply(s: String): Double
+
   def size: Int
 
   def toArray: Array[Double] = (0 until size) map apply toArray

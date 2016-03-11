@@ -12,28 +12,31 @@ import org.odusseys.glimpse.models.optimization.AdagradOptimizer
  * Created by umizrahi on 08/03/2016.
  */
 class LinearRegression(formula: Formula,
-                       method: Method = Newton,
                        maxIterations: Int = 100,
-                       initialIntercept: Double = 0.0,
+                       initialIntercept: Double = Double.NaN,
                        initialCoefficients: Seq[Double] = null) {
 
 
-  def train[DataType <: Data](data: DataFrame[DataType]): LinearRegressionModel = {
+  def train[DataType <: Data](data: DataFrame[DataType], method: Method = Newton) = {
     val reader = formula.decodeFor(data)
     require(reader.signature._1 == 1, "Formula should have a single response !")
     val variables = reader.variables
     val response = reader.responses(0)
     method match {
       case Newton => trainNewton(data, variables, response)
-      case _ => {
-        val glm = new GLM(formula, Gaussian, maxIterations, initialIntercept, initialCoefficients)
+      case _ =>
+        val initBaseline = if (initialIntercept.isNaN) {
+          data.map(l => response(l)).sum / data.size
+        } else {
+          initialIntercept
+        }
+        val glm = new GLM(formula, Gaussian, maxIterations, initBaseline, initialCoefficients)
           .train(data, method)
-        new LinearRegressionModel(glm.intercept, glm.coefficients)
-      }
+        new LinearRegressionModel(glm.intercept, glm.coefficients, variables)
     }
   }
 
-  private def trainNewton[DataType <: Data](data: DataFrame[DataType], variables: Array[DataType => Double], response: DataType => Double): LinearRegressionModel = {
+  private def trainNewton[DataType <: Data](data: DataFrame[DataType], variables: Array[DataType => Double], response: DataType => Double) = {
 
     val design = DenseMatrix.zeros[Double](data.size, variables.length + 1)
     var i = 0
@@ -46,15 +49,17 @@ class LinearRegression(formula: Formula,
     }
     val y = new DenseMatrix[Double](data.size, 1, data.map(response).toArray)
     val inverse = inv(design.t * design)
-    val result = (inverse * design).asInstanceOf[DenseMatrix[Double]] * y
+    val result = (inverse * design.t).asInstanceOf[DenseMatrix[Double]] * y
     val c = result.asInstanceOf[DenseMatrix[Double]].toArray
-    new LinearRegressionModel(c(0), c.drop(1))
+    new LinearRegressionModel(c(0), c.drop(1), variables)
   }
 
 }
 
-class LinearRegressionModel(val intercept: Double, val coefficients: Array[Double]) {
-  def predict(d: Data) = intercept + d.indices.map(i => d(i) * coefficients(i)).sum
+class LinearRegressionModel[T <: Data](val intercept: Double,
+                                       val coefficients: Array[Double],
+                                       variables: Array[T => Double]) {
+  def predict(d: T) = intercept + variables.indices.map(i => variables(i)(d) * coefficients(i)).sum
 
   def predict(a: Array[Double]) = intercept + a.indices.map(i => a(i) * coefficients(i)).sum
 
@@ -67,29 +72,5 @@ class LinearRegressionModel(val intercept: Double, val coefficients: Array[Doubl
 object LinearRegression {
 
   case object Newton extends Method
-
-  class AdagradLinearRegression[DataType <: Data](initialBaseline: Double,
-                                                  variables: Array[DataType => Double],
-                                                  response: DataType => Double) extends AdagradOptimizer {
-    val baseline = scalarParm(initialBaseline)
-    val coefficients = vectorParm(variables.length)
-
-    def train(data: DataFrame[DataType], iterations: Int) = {
-      1 to iterations foreach { _ => data.foreach { l =>
-        val delta = predict(l) - response(l)
-        baseline.updateWithGradient(delta)
-        variables.indices.foreach { i =>
-          coefficients.updateWithGradient(i, delta * variables(i)(l))
-        }
-      }
-      }
-      new LinearRegressionModel(baseline, coefficients)
-    }
-
-    def predict(l: DataType) = {
-      baseline + variables.indices.map(i => variables(i)(l) * coefficients(i)).sum
-    }
-
-  }
 
 }
