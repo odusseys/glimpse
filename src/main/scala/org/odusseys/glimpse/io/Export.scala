@@ -28,8 +28,8 @@ object Export {
   def toLibSVM[T <: Data](data: DataFrame[T], formula: Formula, path: String) = {
     val reader = formula.decodeFor(data)
     require(reader.signature._1 == 1, "data must have a single response ! ")
-    val sparseVariables = reader.sparseVariables
-    val response = reader.responses(0)
+    val sparseVariables = reader.sparseNumericVariables
+    val response = reader.numericResponses(0)
     val pw = new PrintWriter(path, "UTF-8")
 
     def decode(d: T) = {

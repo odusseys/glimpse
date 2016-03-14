@@ -20,8 +20,8 @@ class LinearRegression(formula: Formula,
   def train[DataType <: Data](data: DataFrame[DataType], method: Method = Newton) = {
     val reader = formula.decodeFor(data)
     require(reader.signature._1 == 1, "Formula should have a single response !")
-    val variables = reader.variables
-    val response = reader.responses(0)
+    val variables = reader.numericVariables
+    val response = reader.numericResponses(0)
     method match {
       case Newton => trainNewton(data, variables, response)
       case _ =>

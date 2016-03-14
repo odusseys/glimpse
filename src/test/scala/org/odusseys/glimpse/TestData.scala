@@ -9,14 +9,14 @@ import scala.util.Random
  */
 object TestData {
 
-  def clusteringData(nCluster: Int = 3,
+  def clusteringData(nClusters: Int = 3,
                      nVariables: Int = 5,
                      nSamples: Int = 1000,
                      seed: Random = new Random()) = {
-    require(nCluster > 0)
-    val centroids = Array.fill(nCluster, nVariables)(2 * seed.nextGaussian())
-    val sds = Array.fill(nCluster, nVariables)(seed.nextDouble())
-    val probs = Array.fill(nCluster)(seed.nextDouble())
+    require(nClusters > 0)
+    val centroids = Array.fill(nClusters, nVariables)(2 * seed.nextGaussian())
+    val sds = Array.fill(nClusters, nVariables)(seed.nextDouble())
+    val probs = Array.fill(nClusters)(seed.nextDouble())
     val norm = probs.sum
     probs.indices.foreach { i => probs(i) = probs(i) / norm }
 

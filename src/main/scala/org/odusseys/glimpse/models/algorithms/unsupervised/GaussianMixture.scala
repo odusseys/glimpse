@@ -10,7 +10,7 @@ import scala.util.Random
 /**
  * Created by umizrahi on 10/03/2016.
  */
-class GaussianMixtureClustering(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
+class GaussianMixture(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
 
   private def initializeClassic(k: Int, n: Int) = {
     val r = new Random()
@@ -21,7 +21,7 @@ class GaussianMixtureClustering(formula: Formula = " ~ .", k: Int, iterations: I
 
   def train[T <: Data](data: DataFrame[T]) = {
     val reader = formula.decodeFor(data)
-    val variables = reader.variables
+    val variables = reader.numericVariables
     val n = variables.length
 
     val (p, means, sds) = initializeClassic(k, n)
@@ -121,6 +121,64 @@ class GaussianMixtureClustering(formula: Formula = " ~ .", k: Int, iterations: I
 
     for (i <- 1 to iterations) iteration()
 
+    new GaussianMixtureModel[T](p, means, sds, variables)
+
   }
+
+}
+
+class GaussianMixtureModel[DataType <: Data](val probabilities: Array[Double],
+                                             val means: Array[Array[Double]],
+                                             val standardDeviations: Array[Array[Array[Double]]],
+                                             variables: Array[DataType => Double]) {
+  val k = probabilities.length
+  val n = means(0).length
+  val distributions = Array.ofDim[MultivariateGaussian](k)
+  (0 until k) foreach { t =>
+    val m = new DenseVector[Double](means(t))
+    val s = new DenseMatrix[Double](n, n)
+    for (i <- 0 until n) {
+      for (j <- 0 until n) {
+        s(i, j) = standardDeviations(t)(i)(j)
+      }
+    }
+    distributions(t) = new MultivariateGaussian(m, s)
+  }
+
+  def getClusterProbabilities(l: Seq[Double]): Array[Double] = {
+    val dv = new DenseVector[Double](l.toArray)
+    val result = Array.fill(k)(0.0)
+    var sum = 0.0
+    (0 until k) foreach { i =>
+      val t = probabilities(i) * distributions(i).pdf(dv)
+      sum = sum + t
+      result(i) = t
+    }
+    (0 until k) foreach { i => result(i) = result(i) / sum }
+    result
+  }
+
+  def getClusterProbabilities(l: DataType): Array[Double] = {
+    getClusterProbabilities(variables.map(v => v(l)))
+  }
+
+  def classify(l: Seq[Double]): Int = {
+    val dv = new DenseVector[Double](l.toArray)
+    var result = -1
+    var bestProb = -1.0
+    (0 until k) foreach { i =>
+      val t = probabilities(i) * distributions(i).pdf(dv)
+      if (t > bestProb) {
+        bestProb = t
+        result = i
+      }
+    }
+    result
+  }
+
+  def classify(l: DataType): Int = {
+    classify(variables.map(v => v(l)))
+  }
+
 
 }

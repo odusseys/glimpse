@@ -23,9 +23,9 @@ class GLM(formula: Formula,
                        method: Method = SGD): GLMModel[T] = {
     val reader = formula.decodeFor(data)
     require(Set(1, 2).contains(reader.signature._1), "Formula must have at least one response (two if using weights).")
-    val response = reader.responses(0)
-    val weight = if (reader.signature._1 == 2) reader.responses(1) else (t: T) => 1.0
-    val variables = reader.variables
+    val response = reader.numericResponses(0)
+    val weight = if (reader.signature._1 == 2) reader.numericResponses(1) else (t: T) => 1.0
+    val variables = reader.numericVariables
     method match {
       case SGD => trainWithAdagrad(data, weight, response, variables)
       // case LBFGS => trainWithLBFGS(data, weight, response, variables)
