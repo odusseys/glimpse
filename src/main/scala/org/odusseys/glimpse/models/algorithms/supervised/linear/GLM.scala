@@ -1,8 +1,8 @@
-package org.odusseys.glimpse.models.algorithms.supervised
+package org.odusseys.glimpse.models.algorithms.supervised.linear
 
-import breeze.numerics.{log, exp}
-import org.odusseys.glimpse.data.{DataFrame, Data}
-import org.odusseys.glimpse.models.algorithms.{SGD, Method}
+import breeze.numerics.{exp, log}
+import org.odusseys.glimpse.data.{Data, DataFrame}
+import org.odusseys.glimpse.models.algorithms.{Method, SGD}
 import org.odusseys.glimpse.models.formulas.Formula
 import org.odusseys.glimpse.models.optimization.AdagradOptimizer
 
@@ -10,7 +10,7 @@ import org.odusseys.glimpse.models.optimization.AdagradOptimizer
  * Created by umizrahi on 10/03/2016.
  */
 
-import GLM._
+import org.odusseys.glimpse.models.algorithms.supervised.linear.GLM._
 
 class GLM(formula: Formula,
           family: Family = Gaussian,

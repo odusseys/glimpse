@@ -1,12 +1,11 @@
-package org.odusseys.glimpse.models.algorithms.supervised
+package org.odusseys.glimpse.models.algorithms.supervised.linear
 
 import breeze.linalg._
-import org.odusseys.glimpse.data.{DataFrame, Data}
-import LinearRegression._
+import org.odusseys.glimpse.data.{Data, DataFrame}
 import org.odusseys.glimpse.models.algorithms.Method
-import org.odusseys.glimpse.models.algorithms.supervised.GLM.Gaussian
+import org.odusseys.glimpse.models.algorithms.supervised.linear.GLM.Gaussian
+import org.odusseys.glimpse.models.algorithms.supervised.linear.LinearRegression._
 import org.odusseys.glimpse.models.formulas.Formula
-import org.odusseys.glimpse.models.optimization.AdagradOptimizer
 
 /**
  * Created by umizrahi on 08/03/2016.
