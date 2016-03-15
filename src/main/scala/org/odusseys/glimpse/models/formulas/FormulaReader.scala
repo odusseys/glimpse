@@ -5,7 +5,7 @@ import org.odusseys.glimpse.data.{DataFrame, Data}
 /**
  * Created by umizrahi on 14/03/2016.
  */
-sealed trait FormulaReader[T <: Data] {
+sealed abstract class FormulaReader[T <: Data](data: DataFrame[T]) {
   def numericResponses: Array[T => Double] = numericResponseIndices.map(i => (t: T) => t(i))
 
   def numericVariables: Array[T => Double] = numericVariableIndices.map(i => (t: T) => t(i))
@@ -44,11 +44,26 @@ sealed trait FormulaReader[T <: Data] {
     (d: T) => d.indices.withFilter(variableIndexMap.contains)
       .map(i => (variableIndexMap(i), d(i).toInt))
 
+  def numericVariableNames = {
+    numericVariableIndices.map(i => data.mapping(i).name)
+  }
+
+  def factorVariableNames = {
+    factorVariableIndices.map(i => data.mapping(i).name)
+  }
+
+  def numericResponseNames = {
+    numericResponseIndices.map(i => data.mapping(i).name)
+  }
+
+  def factorResponseNames = {
+    factorResponseIndices.map(i => data.mapping(i).name)
+  }
 
 }
 
 class ColumnNamesFormulaReader[T <: Data](formula: ColumnNamesFormula,
-                                          data: DataFrame[T]) extends FormulaReader[T] {
+                                          data: DataFrame[T]) extends FormulaReader[T](data) {
 
   val mapping = data.mapping.collect { case (i, v) => (v.name, i) }
   val unknown = (formula.responses ++ formula.variables).filter(!mapping.contains(_))
@@ -89,7 +104,7 @@ class ColumnNamesFormulaReader[T <: Data](formula: ColumnNamesFormula,
   override def factorVariableIndices: Array[Int] = _factorVariableIndices
 }
 
-class ColumnIndexFormulaReader[T <: Data](formula: ColumnIndexFormula, data: DataFrame[T]) extends FormulaReader[T] {
+class ColumnIndexFormulaReader[T <: Data](formula: ColumnIndexFormula, data: DataFrame[T]) extends FormulaReader[T](data) {
 
   val allIndices = data.mapping.toMap.keySet
   val outOfBounds = formula.responses ++ formula.variables filter (_ < allIndices.size)

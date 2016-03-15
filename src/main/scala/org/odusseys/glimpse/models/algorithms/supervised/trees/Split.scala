@@ -11,15 +11,13 @@ sealed trait Split[DataType <: Data] {
 }
 
 class NumericSplit[DataType <: Data](val split: Double,
-                                     val variable: Variable) extends Split[DataType] {
-  require(variable.continuous, "Cannot construct numeric split from factor !")
-
-  override def goesLeft(d: DataType): Boolean = d(variable) < split
+                                     val variable: DataType => Double,
+                                     val variableName: String) extends Split[DataType] {
+  override def goesLeft(d: DataType): Boolean = variable(d) <= split
 }
 
 class FactorSplit[DataType <: Data](val leftIndices: Set[Int],
-                                    val variable: Variable) extends Split[DataType] {
-  require(!variable.continuous, "Cannot construct discrete split from numeric variable !")
-
-  override def goesLeft(d: DataType): Boolean = leftIndices.contains(d(variable).toInt)
+                                    val variable: DataType => Int,
+                                    val variableName: String) extends Split[DataType] {
+  override def goesLeft(d: DataType): Boolean = leftIndices.contains(variable(d))
 }
