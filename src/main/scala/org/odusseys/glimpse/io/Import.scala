@@ -41,7 +41,7 @@ object Import {
 
     val buf = new ArrayBuffer[DenseData]
     Source.fromFile(path).getLines().drop(if (header) 1 else 0).foreach(s => buf.append(processLine(s)))
-    new DataFrame(buf.toSeq, mapping)
+    new DataFrame(buf.toIndexedSeq, mapping)
   }
 
 

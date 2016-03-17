@@ -2,17 +2,36 @@ package org.odusseys.glimpse.models.algorithms.supervised.trees
 
 import org.odusseys.glimpse.data.{Data, DataFrame, Variable}
 import org.odusseys.glimpse.models.formulas.{FormulaReader, Formula}
-
+import scala.collection.immutable.IndexedSeq
+import scala.StringBuilder
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.util.Random
+import scala.util.parsing.json.JSONObject
 
 
 /**
  * Created by umizrahi on 14/03/2016.
  */
-class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double = 1) {
+class DecisionTree(formula: Formula,
+                   depth: Int = 5,
+                   minWeightsPerNode: Double = 1,
+                   featuresPerSplit: Int = 0,
+                   seed: Random = new Random()) {
 
   import DecisionTree._
+
+  def sampleVariables[DataType <: Data](numericVariables: Array[DataType => Double],
+                                        factorVariables: Array[DataType => Int]): (Array[DataType => Double], Array[DataType => Int]) = {
+    if (featuresPerSplit <= 0) {
+      return (numericVariables, factorVariables)
+    }
+    val (num, fac) = seed.shuffle(0 until (numericVariables.length + factorVariables.length) toList)
+      .take(featuresPerSplit)
+      .partition(_ < numericVariables.length)
+    (num.map(numericVariables(_)).toArray,
+      fac.map(i => i - numericVariables.length).map(factorVariables(_)).toArray)
+  }
 
   def train[DataType <: Data](data: DataFrame[DataType]) = {
 
@@ -31,11 +50,10 @@ class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double =
     val nodeMap = new mutable.HashMap[Int, DTNode[DataType]]
     val root = new DTNode[DataType](0, response, weights, numericVariables, factorVariables)
     nodeMap.put(0, root)
-    var toSplit = Map(root -> data.toSeq)
-
+    var toSplit = Map(root -> data.toIndexedSeq)
     for (i <- 1 to depth) {
-      val newSplits = new mutable.HashMap[DTNode[DataType], Seq[DataType]]
-      val splitResults = toSplit.flatMap { case (n, dat) => n.split(data) }
+      val newSplits = new mutable.HashMap[DTNode[DataType], IndexedSeq[DataType]]
+      val splitResults = toSplit.flatMap { case (n, dat) => n.split(dat) }
       splitResults.foreach { case (left, right, leftData, rightData) =>
         nodeMap.put(left.id, left)
         nodeMap.put(right.id, right)
@@ -43,6 +61,9 @@ class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double =
         newSplits.put(right, rightData)
       }
       toSplit = newSplits.toMap
+      if (i == depth) {
+        toSplit.foreach(u => u._1.computeStats(u._2)) //label the leaves !
+      }
     }
 
     def makeNode(i: Int) = {
@@ -72,11 +93,12 @@ class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double =
     var split: Option[DTSplit] = None
     var totalWeights: Double = Double.NaN
     var label: Double = Double.NaN
+    val (sampledNumerics, sampledFactors) = sampleVariables(numericVariables, factorVariables)
 
     def goesLeft(t: DataType) = {
       split.get match {
-        case NumericDTSplit(loss, variable, s) => numericVariables(variable)(t) <= s
-        case FactorDTSplit(loss, variable, levels) => levels.contains(factorVariables(variable)(t))
+        case NumericDTSplit(loss, variable, s) => sampledNumerics(variable)(t) <= s
+        case FactorDTSplit(loss, variable, levels) => levels.contains(sampledFactors(variable)(t))
       }
     }
 
@@ -86,6 +108,7 @@ class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double =
     }
 
     class SplitComputer[T] {
+
       val totalLabels = label * totalWeights
       var leftLabels = 0.0
       var leftWeights = 0.0
@@ -96,6 +119,7 @@ class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double =
         if (weights <= 0.0) return
         leftLabels = leftLabels + labels
         leftWeights = leftWeights + weights
+        if (leftWeights < minWeightsPerNode || (totalWeights - leftWeights) < minWeightsPerNode) return
         val l = loss(leftLabels, totalLabels - leftLabels, leftWeights, totalWeights - leftWeights)
         if (l < bestLoss) {
           bestLoss = l
@@ -108,13 +132,13 @@ class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double =
     def computeBestNumericSplit(data: Seq[DataType]): Option[DTSplit] = {
       def computeNumericSplit(index: Int, variable: DataType => Double) = {
         val computer = new SplitComputer[Double]
-        data.view.map(l => (variable(l), response(l), weight(l)))
+        data.toStream.map(l => (variable(l), response(l), weight(l)))
           .sortBy(_._1)
           .dropRight(1)
           .foreach { case (v, l, w) => computer.process(v, l, w) }
         computer.best.map(u => NumericDTSplit(computer.bestLoss, index, u))
       }
-      numericVariables.indices.flatMap(i => computeNumericSplit(i, numericVariables(i))) match {
+      sampledNumerics.indices.flatMap(i => computeNumericSplit(i, sampledNumerics(i))) match {
         case Seq() => None
         case results => Some(results.minBy(_.loss))
       }
@@ -144,14 +168,20 @@ class DecisionTree(formula: Formula, depth: Int = 5, minWeightsPerNode: Double =
         }
         computer.best.map(u => FactorDTSplit(computer.bestLoss, index, levels))
       }
-      factorVariables.indices.flatMap(i => computeFactorSplit(i, factorVariables(i))) match {
+      sampledFactors.indices.flatMap(i => computeFactorSplit(i, sampledFactors(i))) match {
         case Seq() => None
         case results => Some(results.minBy(_.loss))
       }
     }
 
 
-    def split(data: Seq[DataType]): Option[(DTNode[DataType], DTNode[DataType], Seq[DataType], Seq[DataType])] = {
+    def split(data: IndexedSeq[DataType]):
+    Option[(
+      DTNode[DataType],
+        DTNode[DataType],
+        IndexedSeq[DataType],
+        IndexedSeq[DataType]
+      )] = {
       computeStats(data)
       val numericSplit = computeBestNumericSplit(data)
       val factorSplit = computeBestFactorSplit(data)
@@ -204,13 +234,16 @@ object DecisionTree {
 }
 
 
-sealed abstract class Node[DataType <: Data](val id: Int, val isLeaf: Boolean)
+sealed abstract class Node[DataType <: Data](val id: Int, val isLeaf: Boolean) {
+}
 
 case class SplitNode[DataType <: Data](override val id: Int, split: Split[DataType]) extends Node[DataType](id, false)
 
 case class Leaf[DataType <: Data](override val id: Int, label: Double) extends Node[DataType](id, true)
 
 class DecisionTreeModel[DataType <: Data](nodes: Map[Int, Node[DataType]]) {
+
+  def nNodes = nodes.size
 
   def predict(t: DataType): Double = {
     var n = nodes(0)
@@ -222,6 +255,21 @@ class DecisionTreeModel[DataType <: Data](nodes: Map[Int, Node[DataType]]) {
       }
     }
     n.asInstanceOf[Leaf[DataType]].label
+  }
+
+  override def toString = {
+    val s = new StringBuilder()
+    nodes.toList.sortBy(_._1).foreach { case (i, n) =>
+      for (i <- 1 to (31 - Integer.numberOfLeadingZeros(i))) {
+        s.append(" ")
+      }
+      n match {
+        case Leaf(id, label) => s.append("leaf : " + label)
+        case SplitNode(id, split) => s.append("node : ")
+      }
+      s.append("\n")
+    }
+    s.toString
   }
 
 }
