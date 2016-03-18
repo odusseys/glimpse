@@ -22,6 +22,21 @@ class NewFormula(s: String) {
 
   class Member(wildcard: Boolean, terms: List[String], exceptions: List[String])
 
+  sealed abstract class FeatureProcessing
+
+  case class Raw(s: String) extends FeatureProcessing
+
+  case class Unary(processor: String, argument: FeatureProcessing)
+
+  case class Binary(processor: String, first: Feature, second: FeatureProcessing
+
+  object FeatureProcessing {
+    //here we should use shunting-yard + postfix processing to create a FeatureProcessing
+    def apply(s: String) = {
+      val exp = s.filter(_ != ' ')
+    }
+  }
+
 
 }
 
@@ -36,9 +51,25 @@ object FormulaFunction {
     "log" -> math.log _,
     "sin" -> math.sin _,
     "cos" -> math.cos _,
-    "sqrt" -> math.sqrt _
+    "sqrt" -> math.sqrt _,
+    "floor" -> math.floor _,
+    "ceil" -> math.ceil _,
+    "abs" -> math.abs _
   )
 
+  val names = mapper.keySet
+
+  val regex = names.mkString("|").r
+
+}
+
+object FormulaOperators {
+  private val mapper = Map[String, ((Double, Double) => Double)](
+    "+" -> (_ + _),
+    "*" -> (_ * _),
+    "/" -> (_ / _)
+
+  )
 }
 
 object NewFormula {
