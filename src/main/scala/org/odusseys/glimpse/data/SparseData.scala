@@ -19,8 +19,6 @@ class SparseData(vec: SparseVector[Double], columnMapping: ColumnMapping) extend
   override def size: Int = vec.length
 
   override def apply(s: String): Double = columnMapping(s)
-}
 
-object SparseData {
-
+  override def contains(i: Int): Boolean = vec.contains(i)
 }

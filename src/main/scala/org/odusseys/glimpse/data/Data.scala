@@ -16,4 +16,6 @@ trait Data {
 
   def toArray: Array[Double] = (0 until size) map apply toArray
 
+  def contains(i: Int): Boolean
+
 }

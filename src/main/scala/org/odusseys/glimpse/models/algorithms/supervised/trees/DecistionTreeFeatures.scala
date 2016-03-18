@@ -1,19 +1,17 @@
 package org.odusseys.glimpse.models.algorithms.supervised.trees
 
-import org.odusseys.glimpse.data.{Data, DataFrame, Variable}
+
+import org.odusseys.glimpse.data.{Data, DataFrame}
 import org.odusseys.glimpse.models.formulas.{FormulaReader, Formula}
 import scala.collection.immutable.IndexedSeq
-import scala.StringBuilder
-import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.util.Random
-import scala.util.parsing.json.JSONObject
 
 
 /**
  * Created by umizrahi on 14/03/2016.
  */
-class DecisionTree(formula: Formula,
+class DecisionTreeFeatures(formula: Formula,
                    depth: Int = 5,
                    minWeightsPerNode: Double = 1,
                    featuresPerSplit: Int = 0,
@@ -88,61 +86,6 @@ class DecisionTree(formula: Formula,
     new DecisionTreeModel(nodeMap.keys.map(i => (i, makeNode(i))).toMap)
 
   }
-
-  /*
-    def train[DataType <: Data](reader: FormulaReader[DataType], data: Seq[DataType]) = {
-
-      require(Set(1, 2).contains(reader.signature._1), "Formula should have 1 or 2 responses (2 if using weights)")
-      val weights = if (reader.signature._1 == 2) {
-        reader.numericResponses(1)
-      } else {
-        (d: DataType) => 1.0
-      }
-      val response = reader.numericResponses(0)
-      val numericVariables = reader.numericVariables
-      val factorVariables = reader.factorVariables
-      val numericVariableNames = reader.numericVariableNames
-      val factorVariableNames = reader.factorVariableNames
-      val nodeMap = new mutable.HashMap[Int, DTNode[DataType]]
-      val root = new DTNode[DataType](0, response, weights, numericVariables, factorVariables)
-      nodeMap.put(0, root)
-      var toSplit = Map(root -> data.toIndexedSeq)
-      for (i <- 1 to depth) {
-        val newSplits = new mutable.HashMap[DTNode[DataType], IndexedSeq[DataType]]
-        val splitResults = toSplit.flatMap { case (n, dat) => n.split(dat) }
-        splitResults.foreach { case (left, right, leftData, rightData) =>
-          nodeMap.put(left.id, left)
-          nodeMap.put(right.id, right)
-          newSplits.put(left, leftData)
-          newSplits.put(right, rightData)
-        }
-        toSplit = newSplits.toMap
-        if (i == depth) {
-          toSplit.foreach(u => u._1.computeStats(u._2)) //label the leaves !
-        }
-      }
-
-      def makeNode(i: Int) = {
-        val n = nodeMap(i)
-        if (nodeMap.contains(2 * i + 1)) {
-          new SplitNode(n.id, n.split.get match {
-            case NumericDTSplit(loss, variable, split) =>
-              new NumericSplit(split, numericVariables(variable), numericVariableNames(variable))
-            case FactorDTSplit(loss, variable, levels) =>
-              new FactorSplit(
-                levels,
-                i => data.mapping(variable).decode(i),
-                factorVariables(variable),
-                factorVariableNames(variable)
-              )
-          })
-        } else {
-          new Leaf(i, n.label)
-        }
-      }
-
-      new DecisionTreeModel(nodeMap.keys.map(i => (i, makeNode(i))).toMap)
-    }*/
 
   class DTNode[DataType <: Data](val id: Int,
                                  response: DataType => Double,
@@ -262,91 +205,6 @@ class DecisionTree(formula: Formula,
           )
       }
     }
-  }
-
-}
-
-object DecisionTree {
-
-  private[trees] class Stat(var labelSum: Double, var weightSum: Double) {
-    def increment(lab: Double, wt: Double) = {
-      labelSum = labelSum + lab
-      weightSum = weightSum + wt
-    }
-  }
-
-  private[trees] abstract class DTSplit(val loss: Double, val variable: Int)
-
-  private[trees] case class NumericDTSplit(override val loss: Double, override val variable: Int, split: Double)
-    extends DTSplit(loss, variable)
-
-  private[trees] case class FactorDTSplit(override val loss: Double, override val variable: Int, levels: Set[Int])
-    extends DTSplit(loss, variable)
-
-
-  private[trees] def loss(leftLabels: Double, rightLabels: Double, leftWeights: Double, rightWeights: Double) = {
-    val p = (leftLabels + rightLabels) / (leftWeights + rightWeights)
-    val u1 = leftLabels / leftWeights - p
-    val u2 = rightLabels / rightWeights - p
-    -leftWeights * u1 * u1 - rightWeights * u2 * u2
-  }
-
-}
-
-
-sealed abstract class Node[+DataType <: Data](val id: Int, val isLeaf: Boolean) {
-  def toJSON: JSONObject
-}
-
-case class SplitNode[DataType <: Data](override val id: Int, split: Split[DataType]) extends Node[DataType](id, false) {
-  def toJSON = {
-    new JSONObject(Map("isLeaf" -> false, "id" -> id, "split" -> split.toJSON))
-  }
-}
-
-case class Leaf(override val id: Int, label: Double) extends Node[Nothing](id, true) {
-  def toJSON = {
-    new JSONObject(Map("isLeaf" -> true, "id" -> id, "label" -> label))
-  }
-}
-
-class DecisionTreeModel[DataType <: Data](nodes: Map[Int, Node[DataType]]) {
-
-  def nNodes = nodes.size
-
-  def predict(t: DataType): Double = {
-    var n = nodes(0)
-    while (!n.isLeaf) {
-      n = if (n.asInstanceOf[SplitNode[DataType]].split.goesLeft(t)) {
-        nodes(2 * n.id + 1)
-      } else {
-        nodes(2 * n.id + 2)
-      }
-    }
-    n.asInstanceOf[Leaf].label
-  }
-
-  override def toString = {
-    val s = new StringBuilder()
-    nodes.toList.sortBy(_._1).foreach { case (i, n) =>
-      for (i <- 1 to (31 - Integer.numberOfLeadingZeros(i))) {
-        s.append(" ")
-      }
-      n match {
-        case Leaf(id, label) => s.append("leaf : " + label)
-        case SplitNode(id, split) => s.append("node : ")
-      }
-      s.append("\n")
-    }
-    s.toString()
-  }
-
-  private[trees] def relabelLeaves(relabeling: Int => Double) = {
-    new DecisionTreeModel(nodes.map { case (i, n) => n match {
-      case SplitNode(id, split: Split[DataType]) => (i, n)
-      case Leaf(id, l) => (i, Leaf(i, relabeling(i)))
-    }
-    })
   }
 
 }

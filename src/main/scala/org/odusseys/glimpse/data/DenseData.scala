@@ -18,4 +18,6 @@ class DenseData(vec: DenseVector[Double], columnMapping: ColumnMapping) extends 
   override def toArray: Array[Double] = vec.toArray
 
   override def apply(s: String): Double = apply(columnMapping(s))
+
+  override def contains(i: Int): Boolean = i < size
 }
