@@ -86,7 +86,7 @@ class BinaryMappedNumericFeatures(first: NumericFeature,
                                   op: (Double, Double) => Double,
                                   opName: String,
                                   infix: Boolean) extends NumericFeature {
-  override def apply[DataType <: Data](t: DataType): Double = ???
+  override def apply[DataType <: Data](t: DataType): Double = op(first(t), second(t))
 
   override def name: String = if (infix) {
     s"${first.name} $opName ${second.name}"

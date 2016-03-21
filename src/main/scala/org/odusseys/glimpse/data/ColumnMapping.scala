@@ -16,6 +16,12 @@ class ColumnMapping(val columns: Seq[Variable]) {
   def apply(i: Int) = mapping(i)
 
   def apply(s: String) = nameMapping(s)
+
+  def get(v: Variable) = reverse.get(v)
+
+  def get(i: Int) = mapping.get(i)
+
+  def get(s: String) = nameMapping.get(s)
 }
 
 object ColumnMapping {
