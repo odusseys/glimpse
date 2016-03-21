@@ -2,10 +2,6 @@ package org.odusseys.glimpse.models.formulas
 
 import org.odusseys.glimpse.data.{DataFrame, Data}
 
-import scala.StringBuilder
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
-
 /**
  * Created by umizrahi on 18/03/2016.
  */
@@ -17,32 +13,16 @@ class NewFormula(s: String) {
   val (leftMember, rightMember) = {
     val membs = s.split(formulaSeparator)
     require(membs.length == 2, s"Formula should have 2 members separated by a $formulaSeparator")
-    (getTerms(membs(0)), getTerms(membs(1)))
+    (getMember(membs(0)), getMember(membs(1)))
   }
-
-  class Member(wildcard: Boolean, terms: List[String], exceptions: List[String])
-
-  sealed abstract class FeatureProcessing
-
-  case class Raw(s: String) extends FeatureProcessing
-
-  case class Unary(processor: String, argument: FeatureProcessing)
-
-  case class Binary(processor: String, first: Feature, second: FeatureProcessing
-
-  object FeatureProcessing {
-    //here we should use shunting-yard + postfix processing to create a FeatureProcessing
-    def apply(s: String) = {
-      val exp = s.filter(_ != ' ')
-    }
-  }
-
 
 }
 
+class Member(wildcard: Boolean, terms: Option[List[String]], exceptions: Option[List[String]])
+
 object FormulaFunction {
 
-  def apply(s: String) = mapper.get(s).orElse(
+  def apply(s: String) = mapper.getOrElse(s,
     throw new NoSuchElementException(s"No function with name $s available for formulae.")
   )
 
@@ -54,22 +34,34 @@ object FormulaFunction {
     "sqrt" -> math.sqrt _,
     "floor" -> math.floor _,
     "ceil" -> math.ceil _,
-    "abs" -> math.abs _
+    "abs" -> ((t: Double) => math.abs(t))
   )
 
   val names = mapper.keySet
+
+  def isFunction(s: String) = mapper.contains(s)
 
   val regex = names.mkString("|").r
 
 }
 
 object FormulaOperators {
-  private val mapper = Map[String, ((Double, Double) => Double)](
-    "+" -> (_ + _),
-    "*" -> (_ * _),
-    "/" -> (_ / _)
 
+  case class Operator(op: (Double, Double) => Double, precedence: Int)
+
+  private val mapper = Map[String, Operator](
+    """+""" -> Operator(_ + _, 1),
+    """*""" -> Operator(_ * _, 2),
+    """/""" -> Operator(_ / _, 3),
+    """-""" -> Operator(_ - _, 1)
   )
+
+  def precedence(s: String) = mapper(s).precedence
+
+  def isOperator(s: String) = names.contains(s)
+
+  val names = mapper.keySet
+  // val regex = expressions.mkString("|").r
 }
 
 object NewFormula {
@@ -77,71 +69,52 @@ object NewFormula {
   implicit def toFormula(s: String): NewFormula = new NewFormula(s)
 
   val formulaSeparator = "="
-  val columnSeparator = '+'
+  val columnSeparator = ','
   val exceptions = "^ *\\* *\\- *(.*)".r
   val wildcard = "*"
-  val factor = "factor\\((.+)\\)".r
   val opening = '('
   val closing = ')'
 
-  def factorize(s: String) = {
-    factor.findFirstMatchIn(s).map(_.group(1))
-  }
-
   def parseExceptions(s: String) = {
-    exceptions.findFirstMatchIn(s).map(_.group(1))
+    exceptions.findFirstMatchIn(s).map(_.group(1).split(columnSeparator).toList)
   }
 
-  def getTerms(s: String) = {
-    var nPar = 0
-    val sb = new StringBuilder
-    val buff = new ArrayBuffer[String]
-    s.foreach {
-      case ' ' =>
-      case `opening` =>
-        if (nPar != 0) {
-          sb.append(opening)
-        }
-        nPar = nPar + 1
-      case `closing` =>
-        nPar = nPar - 1
-        if (nPar != 0) {
-          sb.append(closing)
-        }
-      case `columnSeparator` =>
-        if (nPar == 0) {
-          buff.append(sb.toString())
-          sb.clear()
-        } else {
-          sb.append(columnSeparator)
-        }
-      case c => sb.append(c)
-    }
-    buff.append(sb.toString())
-    buff.toList
-  }
+  val wildcardExpression = "^ *\\*".r
 
-  def split(s: String) = {
-    val sp = s.split(formulaSeparator)
-    sp.length match {
-      case 2 => Some(sp(0), sp(1))
-      case _ => None
-    }
-
-  }
-
-  def main(args: Array[String]) {
-    val a = "a + b + c"
-    val b = "(a + b + c)"
-    val c = "(a + b ) + c"
-    println(getTerms(a))
-    println(getTerms(b))
-    println(getTerms(c))
+  def getMember(s: String) = {
+    val wildcard = wildcardExpression.findFirstMatchIn(s).isDefined
+    val exceptions = parseExceptions(s)
+    val terms = if (wildcard) None else Some(s.split(columnSeparator).toList)
+    new Member(wildcard, terms, exceptions)
   }
 
 }
 
-trait FeatureProcessor
+trait RawFeatureHandler {
+
+  def process[T](token: String): Option[Feature[T]]
+}
+
+
+class FeatureProcessor(rawFeatureHandler: RawFeatureHandler) {
+  def process(syntax: FeatureProcessingSyntax): Option[Feature[_]] = {
+    syntax match {
+      case Raw(token) => rawFeatureHandler.process(token)
+      case Unary(token, argument) =>
+        process(argument) match {
+          case Some(num: NumericFeature) => Some(new MappedNumericFeature(num, FormulaFunction(token), token))
+          case _ => None
+        }
+      case Binary(token, first, second) =>
+        val firstFeature = process(first)
+        val secondFeature = process(second)
+        (firstFeature, secondFeature) match {
+          case (Some(firstNum: NumericFeature), Some(secondNum: NumericFeature)) =>
+          case _ => None
+        }
+    }
+  }
+}
 
 trait FeatureGenerator[DataType <: Data] {
   def numericVariables: Array[NumericFeature]

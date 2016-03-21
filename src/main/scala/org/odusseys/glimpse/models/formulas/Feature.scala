@@ -73,4 +73,27 @@ class ConstantFeature(val value: Double) extends NumericFeature {
   override def name: String = value.toString
 }
 
+class MappedNumericFeature(source: NumericFeature,
+                           op: Double => Double,
+                           opName: String) extends NumericFeature {
+  override def apply[DataType <: Data](t: DataType): Double = op(source(t))
+
+  override def name: String = s"$opName(${source.name})"
+}
+
+class BinaryMappedNumericFeatures(first: NumericFeature,
+                                  second: NumericFeature,
+                                  op: (Double, Double) => Double,
+                                  opName: String,
+                                  infix: Boolean) extends NumericFeature {
+  override def apply[DataType <: Data](t: DataType): Double = ???
+
+  override def name: String = if (infix) {
+    s"${first.name} $opName ${second.name}"
+  } else {
+    s"$opName(${first.name},${second.name})"
+  }
+}
+
+
 
