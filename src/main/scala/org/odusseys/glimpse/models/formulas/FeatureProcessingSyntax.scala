@@ -20,9 +20,9 @@ object FeatureProcessingSyntax {
 
   def tokenize(s: String) = {
     val parensDone = s.replaceAll("\\(", " \\( ").replaceAll("\\)", " \\) ")
-    val functionsDone = FormulaFunction.names.foldLeft(parensDone)((u, v) => u.replace(v, s" $v "))
+    val functionsDone = FormulaFunctions.names.foldLeft(parensDone)((u, v) => u.replace(v, s" $v "))
     val expanded = FormulaOperators.names.foldLeft(functionsDone)((u, v) => u.replace(v, s" $v "))
-    expanded.split(" +")
+    expanded.trim().split(" +")
   }
 
   def shunt(s: Array[String]) = {
@@ -40,11 +40,11 @@ object FeatureProcessingSyntax {
           throw new IllegalArgumentException("Parentheses do not match !")
         } else {
           operatorStack.pop()
-          if (operatorStack.nonEmpty && FormulaFunction.isFunction(operatorStack.top)) {
+          if (operatorStack.nonEmpty && FormulaFunctions.isFunction(operatorStack.top)) {
             output.append(operatorStack.pop())
           }
         }
-      } else if (FormulaFunction.isFunction(token)) {
+      } else if (FormulaFunctions.isFunction(token)) {
         operatorStack.push(token)
       } else if (FormulaOperators.isOperator(token)) {
         val prec = FormulaOperators.precedence(token)
@@ -68,7 +68,7 @@ object FeatureProcessingSyntax {
   def rpnToAst(tokens: List[String]) = {
     val expressions = new mutable.Stack[FeatureProcessingSyntax]
     tokens.foreach { token =>
-      if (FormulaFunction.isFunction(token)) {
+      if (FormulaFunctions.isFunction(token)) {
         require(expressions.nonEmpty, "No arguments found to apply to function " + token)
         val arg = expressions.pop()
         expressions.push(Unary(token, arg))
@@ -82,17 +82,12 @@ object FeatureProcessingSyntax {
         expressions.push(Raw(token))
       }
     }
-    expressions.foreach(println)
     require(expressions.size == 1, "Dangling variables in expression")
     expressions.head
   }
 
   def parseSyntaxTree(s: String) = rpnToAst(shunt(tokenize(s)))
 
-  def main(args: Array[String]) {
-    val u = "a + b / c - sin(ahaha) + (cos(t) + a)"
-    parseSyntaxTree(u)
-  }
 
 }
 
