@@ -1,8 +1,8 @@
-package org.odusseys.glimpse.models.algorithms.supervised
+package org.odusseys.glimpse.models.algorithms.supervised.linear
 
 import org.odusseys.glimpse.data.{Data, DataFrame}
 import org.odusseys.glimpse.models.algorithms.Method
-import org.odusseys.glimpse.models.algorithms.supervised.GLM.Binomial
+import org.odusseys.glimpse.models.algorithms.supervised.linear.GLM.Binomial
 import org.odusseys.glimpse.models.formulas.Formula
 
 /**

@@ -7,7 +7,7 @@ import scala.util.Random
 /**
  * Created by umizrahi on 09/03/2016.
  */
-class KMeans(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
+class KMeans(k: Int, formula: Formula = " ~ .", iterations: Int = 100) {
 
   import KMeans._
 
@@ -18,7 +18,7 @@ class KMeans(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
 
   def train[T <: Data](data: DataFrame[T]) = {
     val reader = formula.decodeFor(data)
-    val variables = reader.variables
+    val variables = reader.numericVariables
     val n = variables.length
     val centroids = initializeClassic(k, n)
 
@@ -41,7 +41,6 @@ class KMeans(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
 
     def updateCentroids() = {
       (0 until k) foreach { t =>
-        counts(t) = 0
         (0 until n) foreach { i => centroids(t)(i) = newCentroids(t)(i) / counts(t) }
       }
     }

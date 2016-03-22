@@ -17,11 +17,11 @@ class FormulaTests extends FunSuite {
     assert(form.variables.toSet.equals(Set("b", "c")))
     val reader = form.decodeFor(data)
     val mapping = data.mapping
-    reader.responseIndices.map(i => mapping(i).name).zip(form.responses).foreach { case (u, v) => assert(u.equals(v)) }
-    reader.variableIndices.map(i => mapping(i).name).zip(form.variables).foreach { case (u, v) => assert(u.equals(v)) }
+    reader.numericResponseIndices.map(i => mapping(i).name).zip(form.responses).foreach { case (u, v) => assert(u.equals(v)) }
+    reader.numericVariableIndices.map(i => mapping(i).name).zip(form.variables).foreach { case (u, v) => assert(u.equals(v)) }
     data.foreach { l =>
-      reader.responses.map(r => r(l)).zip(reader.responseIndices.map(i => l(i))).foreach { case (u, v) => u == v }
-      reader.variables.map(r => r(l)).zip(reader.variableIndices.map(i => l(i))).foreach { case (u, v) => u == v }
+      reader.numericResponses.map(r => r(l)).zip(reader.numericResponseIndices.map(i => l(i))).foreach { case (u, v) => u == v }
+      reader.numericVariables.map(r => r(l)).zip(reader.numericVariableIndices.map(i => l(i))).foreach { case (u, v) => u == v }
     }
   }
 
@@ -33,11 +33,11 @@ class FormulaTests extends FunSuite {
     assert(form.variables.toSet.equals(Set("b", "c")))
     val reader = form.decodeFor(data)
     val mapping = data.mapping
-    reader.responseIndices.map(i => mapping(i).name).zip(form.responses).foreach { case (u, v) => assert(u.equals(v)) }
-    reader.variableIndices.map(i => mapping(i).name).zip(form.variables).foreach { case (u, v) => assert(u.equals(v)) }
+    reader.numericResponseIndices.map(i => mapping(i).name).zip(form.responses).foreach { case (u, v) => assert(u.equals(v)) }
+    reader.numericVariableIndices.map(i => mapping(i).name).zip(form.variables).foreach { case (u, v) => assert(u.equals(v)) }
     data.foreach { l =>
-      reader.responses.map(r => r(l)).zip(reader.responseIndices.map(i => l(i))).foreach { case (u, v) => u == v }
-      reader.variables.map(r => r(l)).zip(reader.variableIndices.map(i => l(i))).foreach { case (u, v) => u == v }
+      reader.numericResponses.map(r => r(l)).zip(reader.numericResponseIndices.map(i => l(i))).foreach { case (u, v) => u == v }
+      reader.numericVariables.map(r => r(l)).zip(reader.numericVariableIndices.map(i => l(i))).foreach { case (u, v) => u == v }
     }
   }
 
@@ -49,11 +49,11 @@ class FormulaTests extends FunSuite {
     assert(form.variables.toSet.equals(Set()))
     val reader = form.decodeFor(data)
     val mapping = data.mapping
-    reader.responseIndices.map(i => mapping(i).name).zip(form.responses).foreach { case (u, v) => assert(u.equals(v)) }
-    reader.variableIndices.map(i => mapping(i).name).zip(form.variables).foreach { case (u, v) => assert(u.equals(v)) }
+    reader.numericResponseIndices.map(i => mapping(i).name).zip(form.responses).foreach { case (u, v) => assert(u.equals(v)) }
+    reader.numericVariableIndices.map(i => mapping(i).name).zip(form.variables).foreach { case (u, v) => assert(u.equals(v)) }
     data.foreach { l =>
-      reader.responses.map(r => r(l)).zip(reader.responseIndices.map(i => l(i))).foreach { case (u, v) => u == v }
-      reader.variables.map(r => r(l)).zip(reader.variableIndices.map(i => l(i))).foreach { case (u, v) => u == v }
+      reader.numericResponses.map(r => r(l)).zip(reader.numericResponseIndices.map(i => l(i))).foreach { case (u, v) => u == v }
+      reader.numericVariables.map(r => r(l)).zip(reader.numericVariableIndices.map(i => l(i))).foreach { case (u, v) => u == v }
     }
   }
 

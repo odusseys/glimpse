@@ -1,8 +1,8 @@
-package org.odusseys.glimpse.models.algorithms.supervised
+package org.odusseys.glimpse.models.algorithms.supervised.linear
 
-import breeze.numerics.{log, exp}
-import org.odusseys.glimpse.data.{DataFrame, Data}
-import org.odusseys.glimpse.models.algorithms.{SGD, Method}
+import breeze.numerics.{exp, log}
+import org.odusseys.glimpse.data.{Data, DataFrame}
+import org.odusseys.glimpse.models.algorithms.{Method, SGD}
 import org.odusseys.glimpse.models.formulas.Formula
 import org.odusseys.glimpse.models.optimization.AdagradOptimizer
 
@@ -10,7 +10,7 @@ import org.odusseys.glimpse.models.optimization.AdagradOptimizer
  * Created by umizrahi on 10/03/2016.
  */
 
-import GLM._
+import org.odusseys.glimpse.models.algorithms.supervised.linear.GLM._
 
 class GLM(formula: Formula,
           family: Family = Gaussian,
@@ -23,9 +23,9 @@ class GLM(formula: Formula,
                        method: Method = SGD): GLMModel[T] = {
     val reader = formula.decodeFor(data)
     require(Set(1, 2).contains(reader.signature._1), "Formula must have at least one response (two if using weights).")
-    val response = reader.responses(0)
-    val weight = if (reader.signature._1 == 2) reader.responses(1) else (t: T) => 1.0
-    val variables = reader.responses
+    val response = reader.numericResponses(0)
+    val weight = if (reader.signature._1 == 2) reader.numericResponses(1) else (t: T) => 1.0
+    val variables = reader.numericVariables
     method match {
       case SGD => trainWithAdagrad(data, weight, response, variables)
       // case LBFGS => trainWithLBFGS(data, weight, response, variables)

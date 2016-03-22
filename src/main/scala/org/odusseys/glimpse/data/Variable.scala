@@ -7,10 +7,14 @@ import scala.collection.mutable
  */
 sealed abstract class Variable(val name: String) {
   def decode(value: Double): String
+
+  def continuous: Boolean
 }
 
 class NumericVariable(override val name: String) extends Variable(name) {
   override def decode(value: Double) = value.toString
+
+  override def continuous = true
 }
 
 class FactorVariable(override val name: String) extends Variable(name) {
@@ -28,6 +32,8 @@ class FactorVariable(override val name: String) extends Variable(name) {
       mapping(level)
     }
   }
+
+  override def continuous = false
 
   def encodedLevel(level: String) = mapping(level)
 
