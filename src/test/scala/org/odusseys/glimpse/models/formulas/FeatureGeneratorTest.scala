@@ -135,4 +135,37 @@ class FeatureGeneratorTest extends FunSuite {
     data.foreach { l => assert(math.abs(a(l) + b(l) - sum(l)) < 0.001) }
   }
 
+  test("classic plus a constant variable") {
+    val form = new NewFormula("a = b, c, 1", true)
+    val gen = form.decodeFor(data)
+    assert(gen.numericResponses.length == 1)
+    assert(gen.factorResponses.length == 0)
+    assert(gen.numericVariables.length == 2)
+    assert(gen.factorVariables.length == 1)
+    val cons = gen.numericVariables(1)
+    data.foreach { l => assert(math.abs(cons(l) - 1.0) < 0.001) }
+  }
+
+  test("classic plus a constant response") {
+    val form = new NewFormula("a, 1 = b,c", true)
+    val gen = form.decodeFor(data)
+    assert(gen.numericResponses.length == 2)
+    assert(gen.factorResponses.length == 0)
+    assert(gen.numericVariables.length == 1)
+    assert(gen.factorVariables.length == 1)
+    val cons = gen.numericResponses(1)
+    data.foreach { l => assert(math.abs(cons(l) - 1.0) < 0.001) }
+  }
+
+  test("adding a constant to a column") {
+    val form = new NewFormula("a + 1 = b,c", true)
+    val gen = form.decodeFor(data)
+    assert(gen.numericResponses.length == 1)
+    assert(gen.factorResponses.length == 0)
+    assert(gen.numericVariables.length == 1)
+    assert(gen.factorVariables.length == 1)
+    val col = gen.numericResponses(0)
+    data.foreach { l => assert(math.abs(col(l) - 1.0 - l("a")) < 0.001) }
+  }
+
 }
