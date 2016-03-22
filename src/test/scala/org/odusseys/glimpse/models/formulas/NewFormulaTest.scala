@@ -8,7 +8,6 @@ import org.scalatest.FunSuite
  */
 class NewFormulaTest extends FunSuite {
 
-
   test("multiple variables") {
     val form = new NewFormula("a = b,c", true)
     assert(!form.leftMember.wildcard)

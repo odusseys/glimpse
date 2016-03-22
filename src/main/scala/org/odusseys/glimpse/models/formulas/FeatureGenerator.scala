@@ -27,7 +27,7 @@ class ColumnIndexRawFeatureHandler[DataType <: Data](data: DataFrame[DataType]) 
     }
   }
 
-  override def eligibleTokens = data.mapping.columns.map(_.name).toList
+  override def eligibleTokens = (0 until data.mapping.size) map (_.toString) toList
 
 }
 
@@ -48,7 +48,7 @@ class ColumnNameRawFeatureHandler[DataType <: Data](data: DataFrame[DataType]) e
     )
   }
 
-  override def eligibleTokens = (0 until data.mapping.size) map (_.toString) toList
+  override def eligibleTokens = data.mapping.columns.map(_.name).toList
 
 }
 
@@ -115,11 +115,10 @@ class ColumnGenerator[DataType <: Data](data: DataFrame[DataType],
     (allTokens.toSet -- (rawLeft ++ formula.rightMember.exceptions)).map(s => Raw(s)).toList
   }).map(processor.getFeature)
 
-  private val _numericVariables = variables.collect{case n: NumericFeature => n}.toArray
-  private val _factorVariables = variables.collect{case n: FactorFeature => n}.toArray
-  private val _numericResponses = responses.collect{case n: NumericFeature => n}.toArray
-  private val _factorResponses = responses.collect{case n: FactorFeature => n}.toArray
-
+  private val _numericVariables = variables.collect { case n: NumericFeature => n }.toArray
+  private val _factorVariables = variables.collect { case n: FactorFeature => n }.toArray
+  private val _numericResponses = responses.collect { case n: NumericFeature => n }.toArray
+  private val _factorResponses = responses.collect { case n: FactorFeature => n }.toArray
 
   override def numericVariables: Array[NumericFeature] = _numericVariables
 
