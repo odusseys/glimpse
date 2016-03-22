@@ -32,7 +32,7 @@ class AdagradOptimizer(val learningRate: Double = 0.1) {
     p
   }
 
-  class ScalarParm private[AdagradOptimizer](val initialValue: Double) {
+  class ScalarParm private[this](val initialValue: Double) {
     var value = initialValue
     var squares = 1.0
 
@@ -45,7 +45,7 @@ class AdagradOptimizer(val learningRate: Double = 0.1) {
 
   }
 
-  class VectorParm private[AdagradOptimizer](val initialValue: Array[Double]) {
+  class VectorParm private[this](val initialValue: Array[Double]) {
 
     val value = initialValue.clone()
     val squares = Array.fill(value.length)(1.0)
@@ -61,7 +61,7 @@ class AdagradOptimizer(val learningRate: Double = 0.1) {
 
   }
 
-  class MatrixParm private[AdagradOptimizer](val initialValue: Array[Array[Double]]) {
+  class MatrixParm private[this](val initialValue: Array[Array[Double]]) {
     require(initialValue != null && initialValue.length > 0 && initialValue(0).length > 0)
     val value = initialValue.clone()
     val squares = Array.fill(initialValue.length, initialValue(0).length)(1.0)

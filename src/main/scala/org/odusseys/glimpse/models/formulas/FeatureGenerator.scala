@@ -16,6 +16,14 @@ class NewFormula(s: String, fromNames: Boolean) {
     (getMember(membs(0)), getMember(membs(1)))
   }
 
+  require(!(leftMember.wildcard && rightMember.wildcard),
+    "Cannot have both response and variable wildcards !")
+
+  require((leftMember.exceptions.isEmpty || leftMember.wildcard) &&
+    (rightMember.exceptions.isEmpty || rightMember.wildcard),
+    "Cannot have exceptions without a wildcard !")
+
+
   def decodeFor[DataType <: Data](data: DataFrame[DataType]): FeatureGenerator[DataType] =
     new ColumnGenerator(
       data,
@@ -28,9 +36,21 @@ class NewFormula(s: String, fromNames: Boolean) {
 
 }
 
-class Member(wildcard: Boolean,
-             terms: Option[List[FeatureProcessingSyntax]],
-             exceptions: Option[List[FeatureProcessingSyntax]])
+class Member(val wildcard: Boolean,
+             val terms: List[FeatureProcessingSyntax],
+             val exceptions: List[String]) {
+
+  private def extractRawFromSyntax(syntax: FeatureProcessingSyntax): List[String] = {
+    syntax match {
+      case Raw(s) => List(s)
+      case Unary(p, arg) => extractRawFromSyntax(arg)
+      case Binary(p, first, sec) => extractRawFromSyntax(first) ++ extractRawFromSyntax(sec)
+    }
+  }
+
+  def extractRawTerms = terms.flatMap(extractRawFromSyntax)
+
+}
 
 object FormulaFunction {
 
@@ -97,12 +117,12 @@ object NewFormula {
   def getMember(s: String) = {
     import FeatureProcessingSyntax._
     val wildcard = wildcardExpression.findFirstMatchIn(s).isDefined
-    val exceptions = parseExceptions(s)
-    val terms = if (wildcard) None else Some(s.split(columnSeparator).toList)
+    val exceptions = parseExceptions(s).getOrElse(List())
+    val terms = if (wildcard) List() else s.split(columnSeparator).toList
     new Member(
       wildcard,
-      terms.map(_.map(s => parseSyntaxTree(s))),
-      exceptions.map(_.map(s => parseSyntaxTree(s))))
+      terms.map(s => parseSyntaxTree(s)),
+      exceptions)
   }
 
 }
@@ -110,6 +130,8 @@ object NewFormula {
 trait RawFeatureHandler {
 
   def process(token: String): Option[Feature[_]]
+
+  def eligibleTokens: List[String]
 }
 
 class ColumnIndexRawFeatureHandler[DataType <: Data](data: DataFrame[DataType]) extends RawFeatureHandler {
@@ -125,6 +147,8 @@ class ColumnIndexRawFeatureHandler[DataType <: Data](data: DataFrame[DataType]) 
       case _ => None
     }
   }
+
+  override def eligibleTokens = data.mapping.columns.map(_.name).toList
 
 }
 
@@ -145,10 +169,20 @@ class ColumnNameRawFeatureHandler[DataType <: Data](data: DataFrame[DataType]) e
     )
   }
 
+  override def eligibleTokens = (0 until data.mapping.size) map (_.toString) toList
+
 }
 
 class FeatureProcessor(rawFeatureHandler: RawFeatureHandler) {
-  def process(syntax: FeatureProcessingSyntax): Option[Feature[_]] = {
+
+  def getFeature(syntax: FeatureProcessingSyntax) = {
+    process(syntax) match {
+      case Some(f) => f
+      case None => throw new IllegalArgumentException("Could not parse formula token with syntax " + syntax) //not great
+    }
+  }
+
+  private def process(syntax: FeatureProcessingSyntax): Option[Feature[_]] = {
     syntax match {
       case Raw(token) => rawFeatureHandler.process(token)
       case Unary(token, argument) =>
@@ -186,11 +220,33 @@ class ColumnGenerator[DataType <: Data](data: DataFrame[DataType],
   extends FeatureGenerator[DataType] {
 
 
-  override def numericVariables: Array[NumericFeature] = ???
+  private val processor = new FeatureProcessor(rawFeatureHandler)
+  private val allTokens = rawFeatureHandler.eligibleTokens
+  private val responses = (if (!formula.leftMember.wildcard) {
+    formula.leftMember.terms
+  } else {
+    val rawRight = formula.rightMember.extractRawTerms
+    (allTokens.toSet -- (rawRight ++ formula.leftMember.exceptions)).map(s => Raw(s)).toList
+  }).map(processor.getFeature)
 
-  override def numericResponses: Array[NumericFeature] = ???
+  private val variables = (if (!formula.rightMember.wildcard) {
+    formula.rightMember.terms
+  } else {
+    val rawLeft = formula.leftMember.extractRawTerms
+    (allTokens.toSet -- (rawLeft ++ formula.rightMember.exceptions)).map(s => Raw(s)).toList
+  }).map(processor.getFeature)
 
-  override def factorResponses: Array[FactorFeature] = ???
+  private val _numericVariables = variables.collect{case n: NumericFeature => n}.toArray
+  private val _factorVariables = variables.collect{case n: FactorFeature => n}.toArray
+  private val _numericResponses = responses.collect{case n: NumericFeature => n}.toArray
+  private val _factorResponses = responses.collect{case n: FactorFeature => n}.toArray
 
-  override def factorVariables: Array[FactorFeature] = ???
+
+  override def numericVariables: Array[NumericFeature] = _numericVariables
+
+  override def numericResponses: Array[NumericFeature] = _numericResponses
+
+  override def factorResponses: Array[FactorFeature] = _factorResponses
+
+  override def factorVariables: Array[FactorFeature] = _factorVariables
 }
