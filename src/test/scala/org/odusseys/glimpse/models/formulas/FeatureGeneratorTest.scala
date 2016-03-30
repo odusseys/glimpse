@@ -14,7 +14,7 @@ class FeatureGeneratorTest extends FunSuite {
   /*From column names */
 
   test("multiple variables") {
-    val form = new NewFormula("a = b,c", true)
+    val form = new Formula("a = b,c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 0)
@@ -23,7 +23,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("multiple responses") {
-    val form = new NewFormula("a,b = c", true)
+    val form = new Formula("a,b = c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 2)
     assert(gen.factorResponses.length == 0)
@@ -32,7 +32,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("wildcard response") {
-    val form = new NewFormula("* = c", true)
+    val form = new Formula("* = c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 2)
     assert(gen.factorResponses.length == 0)
@@ -41,7 +41,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("wildcard response with exception") {
-    val form = new NewFormula("* - a = c", true)
+    val form = new Formula("* - a = c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 0)
@@ -50,7 +50,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("wildcard response with multiple exceptions") {
-    val form = new NewFormula("* - a,b = c", true)
+    val form = new Formula("* - a,b = c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 0)
     assert(gen.factorResponses.length == 0)
@@ -59,7 +59,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("wildcard variable") {
-    val form = new NewFormula("a = *", true)
+    val form = new Formula("a = *", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 0)
@@ -68,7 +68,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("wildcard variable with exception") {
-    val form = new NewFormula("a = * - b", true)
+    val form = new Formula("a = * - b", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 0)
@@ -77,7 +77,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("wildcard variable with multiple exceptions") {
-    val form = new NewFormula("a = * - b,c", true)
+    val form = new Formula("a = * - b,c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 0)
@@ -86,7 +86,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("variable plus sinus of that variable") {
-    val form = new NewFormula("a, sin(a) = b,c", true)
+    val form = new Formula("a, sin(a) = b,c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 2)
     assert(gen.factorResponses.length == 0)
@@ -98,7 +98,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("response plus sinus of that response") {
-    val form = new NewFormula("b,c = a, sin(a)", true)
+    val form = new Formula("b,c = a, sin(a)", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 1)
@@ -110,7 +110,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("variables plus sum of these variable") {
-    val form = new NewFormula("c = a, b, a + b", true)
+    val form = new Formula("c = a, b, a + b", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 0)
     assert(gen.factorResponses.length == 1)
@@ -123,7 +123,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("responses plus sum of these responses") {
-    val form = new NewFormula("a, b, a + b = c", true)
+    val form = new Formula("a, b, a + b = c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 3)
     assert(gen.factorResponses.length == 0)
@@ -136,7 +136,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("classic plus a constant variable") {
-    val form = new NewFormula("a = b, c, 1", true)
+    val form = new Formula("a = b, c, 1", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 0)
@@ -147,7 +147,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("classic plus a constant response") {
-    val form = new NewFormula("a, 1 = b,c", true)
+    val form = new Formula("a, 1 = b,c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 2)
     assert(gen.factorResponses.length == 0)
@@ -158,7 +158,7 @@ class FeatureGeneratorTest extends FunSuite {
   }
 
   test("adding a constant to a column") {
-    val form = new NewFormula("a + 1 = b,c", true)
+    val form = new Formula("a + 1 = b,c", true)
     val gen = form.decodeFor(data)
     assert(gen.numericResponses.length == 1)
     assert(gen.factorResponses.length == 0)

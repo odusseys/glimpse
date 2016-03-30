@@ -18,7 +18,7 @@ class RandomForest(formula: Formula,
   def train[DataType <: Data](data: DataFrame[DataType]) = {
     val reader = formula.decodeFor(data)
     val nf = if (nVariablesSampled <= 0) {
-      math.sqrt(reader.factorVariableIndices.size + reader.numericVariableIndices.size).toInt
+      math.sqrt(reader.factorVariables.size + reader.numericVariables.size).toInt
     } else {
       nVariablesSampled
     }

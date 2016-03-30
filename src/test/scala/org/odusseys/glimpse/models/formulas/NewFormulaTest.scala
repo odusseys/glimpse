@@ -6,10 +6,10 @@ import org.scalatest.FunSuite
 /**
  * Created by umizrahi on 22/03/2016.
  */
-class NewFormulaTest extends FunSuite {
+class FormulaTest extends FunSuite {
 
   test("multiple variables") {
-    val form = new NewFormula("a = b,c", true)
+    val form = new Formula("a = b,c", true)
     assert(!form.leftMember.wildcard)
     assert(!form.rightMember.wildcard)
     assert(form.leftMember.exceptions.isEmpty)
@@ -19,7 +19,7 @@ class NewFormulaTest extends FunSuite {
   }
 
   test("multiple responses") {
-    val form = new NewFormula("a,b = c", true)
+    val form = new Formula("a,b = c", true)
     assert(!form.leftMember.wildcard)
     assert(!form.rightMember.wildcard)
     assert(form.leftMember.exceptions.isEmpty)
@@ -29,7 +29,7 @@ class NewFormulaTest extends FunSuite {
   }
 
   test("wildcard response") {
-    val form = new NewFormula("* = c", true)
+    val form = new Formula("* = c", true)
     assert(form.leftMember.wildcard)
     assert(!form.rightMember.wildcard)
     assert(form.leftMember.exceptions.isEmpty)
@@ -39,7 +39,7 @@ class NewFormulaTest extends FunSuite {
   }
 
   test("wildcard response with exception") {
-    val form = new NewFormula("* - a = c", true)
+    val form = new Formula("* - a = c", true)
     assert(form.leftMember.wildcard)
     assert(!form.rightMember.wildcard)
     assert(form.leftMember.exceptions.equals(List("a")))
@@ -49,7 +49,7 @@ class NewFormulaTest extends FunSuite {
   }
 
   test("wildcard response with multiple exceptions") {
-    val form = new NewFormula("* - a,b = c", true)
+    val form = new Formula("* - a,b = c", true)
     assert(form.leftMember.wildcard)
     assert(!form.rightMember.wildcard)
     assert(form.leftMember.exceptions.equals(List("a","b")))
@@ -59,7 +59,7 @@ class NewFormulaTest extends FunSuite {
   }
 
   test("wildcard variable") {
-    val form = new NewFormula("a = *", true)
+    val form = new Formula("a = *", true)
     assert(!form.leftMember.wildcard)
     assert(form.rightMember.wildcard)
     assert(form.leftMember.exceptions.isEmpty)
@@ -69,7 +69,7 @@ class NewFormulaTest extends FunSuite {
   }
 
   test("wildcard variable with exception") {
-    val form = new NewFormula("a = * - b", true)
+    val form = new Formula("a = * - b", true)
     assert(!form.leftMember.wildcard)
     assert(form.rightMember.wildcard)
     assert(form.leftMember.exceptions.isEmpty)
@@ -79,7 +79,7 @@ class NewFormulaTest extends FunSuite {
   }
 
   test("wildcard variable with multiple exceptions") {
-    val form = new NewFormula("a = * - b,c", true)
+    val form = new Formula("a = * - b,c", true)
     assert(!form.leftMember.wildcard)
     assert(form.rightMember.wildcard)
     assert(form.leftMember.exceptions.isEmpty)

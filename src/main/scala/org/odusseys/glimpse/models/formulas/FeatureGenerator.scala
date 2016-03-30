@@ -1,10 +1,59 @@
 package org.odusseys.glimpse.models.formulas
 
-import org.odusseys.glimpse.data.{FactorVariable, NumericVariable, DataFrame, Data}
+import org.odusseys.glimpse.data.{FactorColumn, NumericColumn, DataFrame, Data}
 
 /**
  * Created by umizrahi on 18/03/2016.
  */
+
+trait FeatureGenerator[DataType <: Data] {
+  def numericVariables: Array[NumericFeature]
+
+  def numericResponses: Array[NumericFeature]
+
+  def factorVariables: Array[FactorFeature]
+
+  def factorResponses: Array[FactorFeature]
+
+  val signature = (numericResponses.length + factorResponses.length, numericVariables.length + factorVariables.length)
+
+}
+
+class ColumnGenerator[DataType <: Data](data: DataFrame[DataType],
+                                        formula: Formula,
+                                        rawFeatureHandler: RawFeatureHandler)
+  extends FeatureGenerator[DataType] {
+
+
+  private val processor = new FeatureProcessor(rawFeatureHandler)
+  private val allTokens = rawFeatureHandler.eligibleTokens
+  private val responses = (if (!formula.leftMember.wildcard) {
+    formula.leftMember.terms
+  } else {
+    val rawRight = formula.rightMember.extractRawTerms
+    (allTokens.toSet -- (rawRight ++ formula.leftMember.exceptions)).map(s => Raw(s)).toList
+  }).map(processor.getFeature)
+
+  private val variables = (if (!formula.rightMember.wildcard) {
+    formula.rightMember.terms
+  } else {
+    val rawLeft = formula.leftMember.extractRawTerms
+    (allTokens.toSet -- (rawLeft ++ formula.rightMember.exceptions)).map(s => Raw(s)).toList
+  }).map(processor.getFeature)
+
+  private val _numericVariables = variables.collect { case n: NumericFeature => n }.toArray
+  private val _factorVariables = variables.collect { case n: FactorFeature => n }.toArray
+  private val _numericResponses = responses.collect { case n: NumericFeature => n }.toArray
+  private val _factorResponses = responses.collect { case n: FactorFeature => n }.toArray
+
+  override def numericVariables: Array[NumericFeature] = _numericVariables
+
+  override def numericResponses: Array[NumericFeature] = _numericResponses
+
+  override def factorResponses: Array[FactorFeature] = _factorResponses
+
+  override def factorVariables: Array[FactorFeature] = _factorVariables
+}
 
 trait RawFeatureHandler {
 
@@ -21,8 +70,8 @@ class ColumnIndexRawFeatureHandler[DataType <: Data](data: DataFrame[DataType]) 
       case e: NumberFormatException => return None
     }
     data.mapping.get(index) match {
-      case Some(n: NumericVariable) => Some(new NumericColumnFeature(n, index))
-      case Some(f: FactorVariable) => Some(new FactorColumnFeature(f, index))
+      case Some(n: NumericColumn) => Some(new NumericColumnFeature(n, index))
+      case Some(f: FactorColumn) => Some(new FactorColumnFeature(f, index))
       case _ => None
     }
   }
@@ -35,8 +84,8 @@ class ColumnNameRawFeatureHandler[DataType <: Data](data: DataFrame[DataType]) e
   override def process(token: String): Option[Feature[_]] = {
     val mapping = data.mapping
     val columnCandidate = mapping.get(token).map(i => mapping(i)) match {
-      case Some(n: NumericVariable) => Some(new NumericColumnFeature(n, mapping(n)))
-      case Some(f: FactorVariable) => Some(new FactorColumnFeature(f, mapping(f)))
+      case Some(n: NumericColumn) => Some(new NumericColumnFeature(n, mapping(n)))
+      case Some(f: FactorColumn) => Some(new FactorColumnFeature(f, mapping(f)))
       case _ => None
     }
     columnCandidate.orElse(
@@ -82,49 +131,3 @@ class FeatureProcessor(rawFeatureHandler: RawFeatureHandler) {
   }
 }
 
-trait FeatureGenerator[DataType <: Data] {
-  def numericVariables: Array[NumericFeature]
-
-  def numericResponses: Array[NumericFeature]
-
-  def factorVariables: Array[FactorFeature]
-
-  def factorResponses: Array[FactorFeature]
-
-}
-
-class ColumnGenerator[DataType <: Data](data: DataFrame[DataType],
-                                        formula: NewFormula,
-                                        rawFeatureHandler: RawFeatureHandler)
-  extends FeatureGenerator[DataType] {
-
-
-  private val processor = new FeatureProcessor(rawFeatureHandler)
-  private val allTokens = rawFeatureHandler.eligibleTokens
-  private val responses = (if (!formula.leftMember.wildcard) {
-    formula.leftMember.terms
-  } else {
-    val rawRight = formula.rightMember.extractRawTerms
-    (allTokens.toSet -- (rawRight ++ formula.leftMember.exceptions)).map(s => Raw(s)).toList
-  }).map(processor.getFeature)
-
-  private val variables = (if (!formula.rightMember.wildcard) {
-    formula.rightMember.terms
-  } else {
-    val rawLeft = formula.leftMember.extractRawTerms
-    (allTokens.toSet -- (rawLeft ++ formula.rightMember.exceptions)).map(s => Raw(s)).toList
-  }).map(processor.getFeature)
-
-  private val _numericVariables = variables.collect { case n: NumericFeature => n }.toArray
-  private val _factorVariables = variables.collect { case n: FactorFeature => n }.toArray
-  private val _numericResponses = responses.collect { case n: NumericFeature => n }.toArray
-  private val _factorResponses = responses.collect { case n: FactorFeature => n }.toArray
-
-  override def numericVariables: Array[NumericFeature] = _numericVariables
-
-  override def numericResponses: Array[NumericFeature] = _numericResponses
-
-  override def factorResponses: Array[FactorFeature] = _factorResponses
-
-  override def factorVariables: Array[FactorFeature] = _factorVariables
-}

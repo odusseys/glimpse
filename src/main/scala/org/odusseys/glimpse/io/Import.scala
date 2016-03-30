@@ -23,9 +23,9 @@ object Import {
     val numeric = processor.result
     val variables = numeric.indices.map { i =>
       if (numeric(i))
-        new NumericVariable(names(i))
+        new NumericColumn(names(i))
       else
-        new FactorVariable(names(i))
+        new FactorColumn(names(i))
     }.toArray
     val mapping = new ColumnMapping(variables)
 
@@ -34,7 +34,7 @@ object Import {
       val dat = ar.indices.map { i =>
         if (numeric(i))
           ar(i).toDouble
-        else variables(i).asInstanceOf[FactorVariable].process(ar(i)).toDouble
+        else variables(i).asInstanceOf[FactorColumn].process(ar(i)).toDouble
       }.toArray
       new DenseData(new DenseVector(dat), mapping)
     }

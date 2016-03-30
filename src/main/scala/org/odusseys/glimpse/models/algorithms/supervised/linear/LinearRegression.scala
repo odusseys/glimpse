@@ -5,7 +5,7 @@ import org.odusseys.glimpse.data.{Data, DataFrame}
 import org.odusseys.glimpse.models.algorithms.Method
 import org.odusseys.glimpse.models.algorithms.supervised.linear.GLM.Gaussian
 import org.odusseys.glimpse.models.algorithms.supervised.linear.LinearRegression._
-import org.odusseys.glimpse.models.formulas.Formula
+import org.odusseys.glimpse.models.formulas.{Formula, NumericFeature}
 
 /**
  * Created by umizrahi on 08/03/2016.
@@ -35,7 +35,9 @@ class LinearRegression(formula: Formula,
     }
   }
 
-  private def trainNewton[DataType <: Data](data: DataFrame[DataType], variables: Array[DataType => Double], response: DataType => Double) = {
+  private def trainNewton[DataType <: Data](data: DataFrame[DataType],
+                                            variables: Array[NumericFeature],
+                                            response: NumericFeature) = {
 
     val design = DenseMatrix.zeros[Double](data.size, variables.length + 1)
     var i = 0
@@ -48,17 +50,17 @@ class LinearRegression(formula: Formula,
     }
     val y = new DenseMatrix[Double](data.size, 1, data.map(response).toArray)
     val inverse = inv(design.t * design)
-    val result = (inverse * design.t).asInstanceOf[DenseMatrix[Double]] * y
+    val result = (inverse * design.t) * y
     val c = result.asInstanceOf[DenseMatrix[Double]].toArray
     new LinearRegressionModel(c(0), c.drop(1), variables)
   }
 
 }
 
-class LinearRegressionModel[T <: Data](val intercept: Double,
+class LinearRegressionModel(val intercept: Double,
                                        val coefficients: Array[Double],
-                                       variables: Array[T => Double]) {
-  def predict(d: T) = intercept + variables.indices.map(i => variables(i)(d) * coefficients(i)).sum
+                                       variables: Array[NumericFeature]) {
+  def predict[T <: Data](d: T) = intercept + variables.indices.map(i => variables(i)(d) * coefficients(i)).sum
 
   def predict(a: Array[Double]) = intercept + a.indices.map(i => a(i) * coefficients(i)).sum
 

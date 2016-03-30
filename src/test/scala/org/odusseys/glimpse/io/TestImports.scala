@@ -1,6 +1,6 @@
 package org.odusseys.glimpse.io
 
-import org.odusseys.glimpse.data.{FactorVariable, NumericVariable}
+import org.odusseys.glimpse.data.{FactorColumn, NumericColumn}
 import org.scalatest.FunSuite
 
 /**
@@ -15,10 +15,10 @@ class TestImports extends FunSuite {
     val cols = data.columns
     assert(cols.length == 3)
     assert(cols.map(_.name).zip(List("a", "b", "c")).forall { case (u, v) => u.equals(v) })
-    assert(cols(0).isInstanceOf[NumericVariable])
-    assert(cols(1).isInstanceOf[NumericVariable])
-    assert(cols(2).isInstanceOf[FactorVariable])
-    val f = cols(2).asInstanceOf[FactorVariable]
+    assert(cols(0).isInstanceOf[NumericColumn])
+    assert(cols(1).isInstanceOf[NumericColumn])
+    assert(cols(2).isInstanceOf[FactorColumn])
+    val f = cols(2).asInstanceOf[FactorColumn]
     assert(f.nLevels == 2)
     assert(f.levels.zip(List("x", "1")).forall { case (u, v) => u == v })
   }

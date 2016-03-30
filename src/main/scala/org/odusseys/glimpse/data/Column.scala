@@ -11,13 +11,13 @@ sealed abstract class Variable(val name: String) {
   def continuous: Boolean
 }
 
-class NumericVariable(override val name: String) extends Variable(name) {
+class NumericColumn(override val name: String) extends Variable(name) {
   override def decode(value: Double) = value.toString
 
   override def continuous = true
 }
 
-class FactorVariable(override val name: String) extends Variable(name) {
+class FactorColumn(override val name: String) extends Variable(name) {
 
   private val mapping = new mutable.HashMap[String, Int]()
   private val inverseMapping = new mutable.HashMap[Int, String]()
@@ -46,6 +46,6 @@ class FactorVariable(override val name: String) extends Variable(name) {
   override def decode(value: Double): String = inverseMapping(value.toInt)
 }
 
-class FactorDummy[T](factorName: String, level: String) extends NumericVariable(factorName + "$" + level) {
-  def getFactor = new FactorVariable(factorName)
+class FactorDummy[T](factorName: String, level: String) extends NumericColumn(factorName + "$" + level) {
+  def getFactor = new FactorColumn(factorName)
 }

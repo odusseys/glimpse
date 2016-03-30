@@ -1,6 +1,7 @@
 package org.odusseys.glimpse.models.algorithms.supervised.trees
 
-import org.odusseys.glimpse.data.Data
+import org.odusseys.glimpse.data.{Data, FactorColumn}
+import org.odusseys.glimpse.models.formulas.{FactorFeature, NumericFeature}
 
 import scala.util.parsing.json.{JSONArray, JSONObject}
 
@@ -15,24 +16,22 @@ sealed trait Split[DataType <: Data] {
 }
 
 class NumericSplit[DataType <: Data](val split: Double,
-                                     val variable: DataType => Double,
-                                     val variableName: String) extends Split[DataType] {
+                                     val variable: NumericFeature) extends Split[DataType] {
   override def goesLeft(d: DataType): Boolean = variable(d) <= split
 
   override def toJSON: JSONObject = new JSONObject(Map(
-    "variable" -> variableName,
+    "variable" -> variable.name,
     "split" -> split
   ))
 }
 
 class FactorSplit[DataType <: Data](val leftIndices: Set[Int],
                                     val levelMapping: Int => String,
-                                    val variable: DataType => Int,
-                                    val variableName: String) extends Split[DataType] {
+                                    val variable: FactorFeature) extends Split[DataType] {
   override def goesLeft(d: DataType): Boolean = leftIndices.contains(variable(d))
 
   override def toJSON: JSONObject = new JSONObject(Map(
-    "variable" -> variableName,
+    "variable" -> variable.name,
     "leftLevels" -> new JSONArray(leftIndices.map(levelMapping).toList)
   ))
 

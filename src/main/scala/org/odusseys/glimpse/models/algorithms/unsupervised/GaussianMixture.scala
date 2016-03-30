@@ -2,8 +2,8 @@ package org.odusseys.glimpse.models.algorithms.unsupervised
 
 import breeze.linalg.{DenseMatrix, DenseVector}
 import breeze.stats.distributions.MultivariateGaussian
-import org.odusseys.glimpse.data.{DataFrame, Data}
-import org.odusseys.glimpse.models.formulas.Formula
+import org.odusseys.glimpse.data.{Data, DataFrame}
+import org.odusseys.glimpse.models.formulas.{Formula, NumericFeature}
 
 import scala.util.Random
 
@@ -130,7 +130,7 @@ class GaussianMixture(formula: Formula = " ~ .", k: Int, iterations: Int = 100) 
 class GaussianMixtureModel[DataType <: Data](val probabilities: Array[Double],
                                              val means: Array[Array[Double]],
                                              val standardDeviations: Array[Array[Array[Double]]],
-                                             variables: Array[DataType => Double]) {
+                                             variables: Array[NumericFeature]) {
   val k = probabilities.length
   val n = means(0).length
   val distributions = Array.ofDim[MultivariateGaussian](k)
