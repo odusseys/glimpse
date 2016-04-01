@@ -11,7 +11,7 @@ class DecisionTreeTest extends FunSuite {
   val data = TestData.linearData()
 
   test("without weights") {
-    val model = new DecisionTree("y ~ .", depth = 7, minWeightsPerNode = 100).train(data)
+    val model = new DecisionTree("y = *", depth = 7, minWeightsPerNode = 100).train(data)
     data.foreach(l => println(l("y") + " " + model.predict(l)))
     println(model.nNodes)
     println(model)

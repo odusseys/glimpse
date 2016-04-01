@@ -10,7 +10,7 @@ import scala.util.Random
 /**
  * Created by umizrahi on 10/03/2016.
  */
-class GaussianMixture(formula: Formula = " ~ .", k: Int, iterations: Int = 100) {
+class GaussianMixture(formula: Formula = " = *", k: Int, iterations: Int = 100) {
 
   private def initializeClassic(k: Int, n: Int) = {
     val r = new Random()

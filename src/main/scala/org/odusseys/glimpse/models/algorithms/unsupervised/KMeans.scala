@@ -7,7 +7,7 @@ import scala.util.Random
 /**
  * Created by umizrahi on 09/03/2016.
  */
-class KMeans(k: Int, formula: Formula = " ~ .", iterations: Int = 100) {
+class KMeans(k: Int, formula: Formula = " = *", iterations: Int = 100) {
 
   import KMeans._
 
@@ -21,8 +21,6 @@ class KMeans(k: Int, formula: Formula = " ~ .", iterations: Int = 100) {
     val variables = reader.numericVariables
     val n = variables.length
     val centroids = initializeClassic(k, n)
-
-
 
     def assign(d: T) = {
       centroids.indices.minBy(i => squareDistance(d, centroids(i)))

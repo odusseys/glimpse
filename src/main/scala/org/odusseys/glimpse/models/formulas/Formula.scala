@@ -56,7 +56,7 @@ object Formula {
     import FeatureProcessingSyntax._
     val wildcard = wildcardExpression.findFirstMatchIn(s).isDefined
     val exceptions = parseExceptions(s).getOrElse(List())
-    val terms = if (wildcard) List() else s.split(columnSeparator).toList
+    val terms = if (wildcard) List() else s.trim.split(columnSeparator).filter(!_.isEmpty).toList
     new FormulaMember(
       wildcard,
       terms.map(s => parseSyntaxTree(s)),

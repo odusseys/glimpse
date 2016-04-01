@@ -15,7 +15,7 @@ trait FeatureGenerator[DataType <: Data] {
 
   def factorResponses: Array[FactorFeature]
 
-  val signature = (numericResponses.length + factorResponses.length, numericVariables.length + factorVariables.length)
+  lazy val signature = (numericResponses.length + factorResponses.length, numericVariables.length + factorVariables.length)
 
 }
 

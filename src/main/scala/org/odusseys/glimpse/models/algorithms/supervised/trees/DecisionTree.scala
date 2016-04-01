@@ -6,7 +6,6 @@ import org.odusseys.glimpse.models.formulas.{ConstantFeature, FactorFeature, For
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
 import scala.util.Random
-import scala.util.parsing.json.JSONObject
 
 
 /**
@@ -290,19 +289,25 @@ object DecisionTree {
 }
 
 
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
+
 sealed abstract class Node[+DataType <: Data](val id: Int, val isLeaf: Boolean) {
-  def toJSON: JSONObject
+  def toJSON: String
 }
 
 case class SplitNode[DataType <: Data](override val id: Int, split: Split[DataType]) extends Node[DataType](id, false) {
   def toJSON = {
-    new JSONObject(Map("isLeaf" -> false, "id" -> id, "split" -> split.toJSON))
+    val json = ("isLeaf" -> false) ~ ("id" -> id) ~ ("split" -> parse(split.toJSON)) //not great
+   compact(render(json))
   }
 }
 
 case class Leaf(override val id: Int, label: Double) extends Node[Nothing](id, true) {
   def toJSON = {
-    new JSONObject(Map("isLeaf" -> true, "id" -> id, "label" -> label))
+    val json = ("isLeaf" -> true) ~ ("id" -> id) ~ ("label" -> label)
+    compact(render(json))
   }
 }
 
