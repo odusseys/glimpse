@@ -58,7 +58,7 @@ object DataFrame {
   def apply(data: Iterable[Seq[Double]], columnNames: Seq[String]): DataFrame[DenseData] = {
     val n = columnNames.size
     require(data.forall(_.size == n), "All sub-collections in the provided collection must have the same size !")
-    val variables = (0 until n) map { i => new NumericVariable(columnNames(i)) } toArray
+    val variables = (0 until n) map { i => new NumericColumn(columnNames(i)) } toArray
     val mapping = new ColumnMapping(variables)
     val dat = data.view.map(l => new DenseData(l.toArray, mapping)).toIndexedSeq
     new DataFrame(dat, mapping)
@@ -73,7 +73,7 @@ object DataFrame {
 
   def apply(data: Iterable[Map[Any, Double]])(implicit d: DummyImplicit): DataFrame[SparseData] = {
     val variableMapping = data.view.flatMap(_.keys.map(_.toString))
-      .toSet.map((s: String) => (s, new NumericVariable(s))).toMap
+      .toSet.map((s: String) => (s, new NumericColumn(s))).toMap
     val mapping = new ColumnMapping(variableMapping.values.toList)
     val n = mapping.columns.size
     val dat = data.view

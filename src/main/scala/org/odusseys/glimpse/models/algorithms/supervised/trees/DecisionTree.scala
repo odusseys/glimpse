@@ -1,13 +1,11 @@
 package org.odusseys.glimpse.models.algorithms.supervised.trees
 
-import org.odusseys.glimpse.data.{Data, DataFrame, Variable}
-import org.odusseys.glimpse.models.formulas.{FormulaReader, Formula}
+import org.odusseys.glimpse.data.{Data, DataFrame}
+import org.odusseys.glimpse.models.formulas.{ConstantFeature, FactorFeature, Formula, NumericFeature}
+
 import scala.collection.immutable.IndexedSeq
-import scala.StringBuilder
-import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.util.Random
-import scala.util.parsing.json.JSONObject
 
 
 /**
@@ -21,8 +19,8 @@ class DecisionTree(formula: Formula,
 
   import DecisionTree._
 
-  def sampleVariables[DataType <: Data](numericVariables: Array[DataType => Double],
-                                        factorVariables: Array[DataType => Int]): (Array[DataType => Double], Array[DataType => Int]) = {
+  def sampleVariables[DataType <: Data](numericVariables: Array[NumericFeature],
+                                        factorVariables: Array[FactorFeature]): (Array[NumericFeature], Array[FactorFeature]) = {
     if (featuresPerSplit <= 0) {
       return (numericVariables, factorVariables)
     }
@@ -40,13 +38,11 @@ class DecisionTree(formula: Formula,
     val weights = if (reader.signature._1 == 2) {
       reader.numericResponses(1)
     } else {
-      (d: DataType) => 1.0
+      new ConstantFeature(1.0)
     }
     val response = reader.numericResponses(0)
     val numericVariables = reader.numericVariables
     val factorVariables = reader.factorVariables
-    val numericVariableNames = reader.numericVariableNames
-    val factorVariableNames = reader.factorVariableNames
     val nodeMap = new mutable.HashMap[Int, DTNode[DataType]]
     val root = new DTNode[DataType](0, response, weights, numericVariables, factorVariables)
     nodeMap.put(0, root)
@@ -71,13 +67,12 @@ class DecisionTree(formula: Formula,
       if (nodeMap.contains(2 * i + 1)) {
         new SplitNode(n.id, n.split.get match {
           case NumericDTSplit(loss, variable, split) =>
-            new NumericSplit(split, numericVariables(variable), numericVariableNames(variable))
+            new NumericSplit[DataType](split, numericVariables(variable))
           case FactorDTSplit(loss, variable, levels) =>
-            new FactorSplit(
+            new FactorSplit[DataType](
               levels,
               i => data.mapping(variable).decode(i),
-              factorVariables(variable),
-              factorVariableNames(variable)
+              factorVariables(variable)
             )
         })
       } else {
@@ -145,10 +140,10 @@ class DecisionTree(formula: Formula,
     }*/
 
   class DTNode[DataType <: Data](val id: Int,
-                                 response: DataType => Double,
-                                 weight: DataType => Double,
-                                 numericVariables: Array[DataType => Double],
-                                 factorVariables: Array[DataType => Int]) {
+                                 response: NumericFeature,
+                                 weight: NumericFeature,
+                                 numericVariables: Array[NumericFeature],
+                                 factorVariables: Array[FactorFeature]) {
 
     var split: Option[DTSplit] = None
     var totalWeights: Double = Double.NaN
@@ -294,19 +289,25 @@ object DecisionTree {
 }
 
 
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
+
 sealed abstract class Node[+DataType <: Data](val id: Int, val isLeaf: Boolean) {
-  def toJSON: JSONObject
+  def toJSON: String
 }
 
 case class SplitNode[DataType <: Data](override val id: Int, split: Split[DataType]) extends Node[DataType](id, false) {
   def toJSON = {
-    new JSONObject(Map("isLeaf" -> false, "id" -> id, "split" -> split.toJSON))
+    val json = ("isLeaf" -> false) ~ ("id" -> id) ~ ("split" -> parse(split.toJSON)) //not great
+   compact(render(json))
   }
 }
 
 case class Leaf(override val id: Int, label: Double) extends Node[Nothing](id, true) {
   def toJSON = {
-    new JSONObject(Map("isLeaf" -> true, "id" -> id, "label" -> label))
+    val json = ("isLeaf" -> true) ~ ("id" -> id) ~ ("label" -> label)
+    compact(render(json))
   }
 }
 

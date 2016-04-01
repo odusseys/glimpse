@@ -12,6 +12,14 @@ abstract class Feature[T: Numeric] {
 
   def name: String
 
+  def toLambda[DataType <: Data] = (d: DataType) => apply(d)
+
+}
+
+object Feature {
+  implicit def numericToLambda[T <: Data](n: NumericFeature): T => Double = n.toLambda[T]
+
+  implicit def factorToLambda[T <: Data](n: FactorFeature) : T => Int = n.toLambda[T]
 }
 
 //maybe unnecessary
@@ -28,13 +36,13 @@ abstract class FactorFeature extends Feature[Int] {
 
 }
 
-class NumericColumnFeature(val variable: NumericVariable, val columnIndex: Int) extends NumericFeature {
+class NumericColumnFeature(val variable: NumericColumn, val columnIndex: Int) extends NumericFeature {
   def apply[DataType <: Data](t: DataType): Double = t(columnIndex)
 
   def name = variable.name
 }
 
-class FactorColumnFeature(val variable: FactorVariable, val columnIndex: Int) extends FactorFeature {
+class FactorColumnFeature(val variable: FactorColumn, val columnIndex: Int) extends FactorFeature {
   override def apply[DataType <: Data](t: DataType): Int = t(columnIndex).toInt
 
   override def name: String = variable.name
@@ -51,7 +59,7 @@ class DummyFeature(val factor: FactorFeature, level: Int, decodedLevel: String) 
 
 }
 
-class NumericAsFactor[DT <: Data](dat: DataFrame[DT], variable: NumericVariable, columnIndex: Int) extends FactorFeature {
+class NumericAsFactor[DT <: Data](dat: DataFrame[DT], variable: NumericColumn, columnIndex: Int) extends FactorFeature {
   val levelMap = dat.view.map(t => t(columnIndex)).distinct.zipWithIndex.toMap
   val inverse = levelMap.map(_.swap)
 

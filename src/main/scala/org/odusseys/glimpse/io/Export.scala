@@ -25,6 +25,8 @@ object Export {
 
   }
 
+  /* todo : reimplement this when sparsity is handled
+
   def toLibSVM[T <: Data](data: DataFrame[T], formula: Formula, path: String) = {
     val reader = formula.decodeFor(data)
     require(reader.signature._1 == 1, "data must have a single response ! ")
@@ -43,6 +45,6 @@ object Export {
     } finally {
       if (pw != null) pw.close()
     }
-  }
+  } */
 
 }

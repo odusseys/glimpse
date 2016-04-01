@@ -10,13 +10,13 @@ import org.scalatest.FunSuite
 class LinearRegressionTest extends FunSuite {
   val data = TestData.linearData()
   test("test predictions with Newton's method") {
-    val model = new LinearRegression("y ~ .").train(data)
+    val model = new LinearRegression("y = *").train(data)
     val rmse = math.sqrt(data.map(l => l("y") - model.predict(l)).map(u => u * u).sum / data.size)
     assert(rmse < 0.05)
   }
 
   test("test predictions with SGD method") {
-    val model = new LinearRegression("y ~ .").train(data, SGD)
+    val model = new LinearRegression("y = *").train(data, SGD)
     val rmse = math.sqrt(data.map(l => l("y") - model.predict(l)).map(u => u * u).sum / data.size)
     assert(rmse < 0.05)
   }
